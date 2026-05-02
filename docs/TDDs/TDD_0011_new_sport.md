@@ -35,8 +35,9 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
 - `cupoMaximo`: Número entero > 0.
 - `precioAdicional`: Valor numérico decimal (float) para cargos extra por el deporte.
 - `esFederado`: Valor booleano que indica si el deporte requiere afiliación federativa.
+- `requires_medical_certificate`: Valor booleano que indica si el deporte requiere certificado médico.
 - `estado`: Enumeración (`ACTIVO` | `INACTIVO`).
-
+ 
 
 ### Contrato de API (@alentapp/shared)
 [Definición de endpoints y tipos compartidos.]
@@ -49,6 +50,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
     cupoMaximo: number;
     precioAdicional: number;
     esFederado: boolean;
+    requires_medical_certificate: boolean;
     estado: 'ACTIVO' | 'INACTIVO';
     
 }
@@ -62,6 +64,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
     cupoMaximo: number;
     precioAdicional: number;
     esFederado: boolean;
+    requires_medical_certificate: boolean;
     estado: 'ACTIVO';
 
     enrollments: [];
