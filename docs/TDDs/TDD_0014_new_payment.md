@@ -1,98 +1,166 @@
 ---
-
-id: 0005
+id: 0014
 estado: Propuesto
-autor: [Abel Di Bella]
-fecha: 2026-04-27
+autor: Abel Di Bella
+fecha: 2026-05-02
 titulo: Registro de Nuevos Pagos
---------------------------------
+---
 
-# TDD-0005: Registro de Nuevos Pagos
+# TDD-0014: Registro de Nuevos Pagos
 
-## Contexto de Negocio (PRD)
+## 1. Contexto de Negocio (PRD)
 
 ### Objetivo
 
-Permitir al tesorero registrar de forma digital las cuotas mensuales de los socios, evitando el seguimiento manual de deudas y garantizando la integridad de la información financiera desde su creación.
+Registrar una nueva obligación de pago para un socio, garantizando integridad y evitando duplicaciones.
 
 ### User Persona
 
-* **Nombre**: Alberto (Tesorero).
-* **Necesidad**: Registrar rápidamente las cuotas mensuales de los socios sin cometer errores, evitando duplicaciones que puedan generar inconsistencias en el estado de cuenta.
+* **Alberto (Tesorero):** necesita registrar cuotas sin errores.
 
 ### Criterios de Aceptación
 
-* El sistema debe validar que no exista un pago previo para el mismo socio, mes y año.
-* El sistema debe registrar el pago con estado **"PENDING"** por defecto.
-* El sistema debe validar que los datos ingresados sean correctos (montos positivos, fechas válidas).
-* Al finalizar, el sistema debe confirmar la creación del pago.
+* No debe existir más de un pago por socio/mes/año
+* El estado inicial debe ser **Pendiente**
+* El monto debe ser mayor a 0
+* El socio debe existir
 
 ---
 
-## Diseño Técnico (RFC)
+## 2. Diseño Técnico (RFC)
 
-### Modelo de Datos
+### 2.1 Modelo de Dominio (TypeScript)
 
-Se definirá la entidad `Payment` con las siguientes propiedades:
-
-* `id`: Identificador único universal (UUID).
-* `memberId`: Referencia al socio.
-* `monto`: Número positivo.
-* `mesReferencia`: Número entero (1-12).
-* `anioReferencia`: Número entero (ej. 2026).
-* `fechaVencimiento`: Fecha límite de pago.
-* `estado`: Enumeración (`PENDING`, `PAID`, `CANCELED`) con valor por defecto `PENDING`.
-* `fechaPago`: Fecha opcional (solo cuando el pago se realiza).
-
----
-
-### Contrato de API (@alentapp/shared)
-
-* **Endpoint**: `POST /api/v1/payments`
-* **Request Body (CreatePaymentRequest):**
-
-```ts id="g7r9df"
-{
-    memberId: string;
-    monto: number;
-    mesReferencia: number;
-    anioReferencia: number;
-    fechaVencimiento: string;
+```ts
+export interface Payment {
+  id: string;
+  memberId: string;
+  monto: number;
+  mesReferencia: number;
+  anioReferencia: number;
+  fechaVencimiento: Date;
+  estado: 'Pendiente' | 'Pagado' | 'Cancelado';
+  fechaPago?: Date;
+  created_at: string;
 }
 ```
 
 ---
 
-### Componentes de Arquitectura Hexagonal
+### 2.2 Contrato de API
 
-1. **Domain**:
-   Entidad `Payment` y reglas de negocio (no duplicación de pagos).
+**POST /api/v1/payments**
 
-2. **Application**:
-   Caso de uso `CreatePayment`, encargado de validar que no exista un pago para el mismo socio, mes y año antes de crearlo.
+**Request**
 
-3. **Infrastructure**:
+```json
+{
+  "memberId": "string",
+  "monto": 1000,
+  "mesReferencia": 4,
+  "anioReferencia": 2026,
+  "fechaVencimiento": "2026-05-03"
+}
+```
 
-   * Adaptador de salida: Implementación del repositorio en base de datos.
-   * Adaptador de entrada: `PaymentController` que expone el endpoint HTTP.
+**Response**
+
+```json
+{
+  "id": "uuid",
+  "estado": "Pendiente"
+}
+```
 
 ---
 
-## Casos de Borde y Errores
+### 2.3 Esquema de Persistencia (Prisma)
 
-| Escenario              | Resultado Esperado                            | Código HTTP               |
-| ---------------------- | --------------------------------------------- | ------------------------- |
-| Pago duplicado         | Mensaje: "Ya existe un pago para ese período" | 409 Conflict              |
-| Monto inválido         | Mensaje: "El monto debe ser mayor a 0"        | 400 Bad Request           |
-| Fecha inválida         | Mensaje: "Fecha de vencimiento inválida"      | 400 Bad Request           |
-| Error de conexión a DB | Mensaje: "Error interno, reintente más tarde" | 500 Internal Server Error |
+```prisma
+model Payment {
+  id               String    @id @default(uuid())
+  memberId         String
+  monto            Float
+  mesReferencia    Int
+  anioReferencia   Int
+  fechaVencimiento DateTime
+  estado           String
+  fechaPago        DateTime?
+  created_at       DateTime  @default(now())
+
+  @@unique([memberId, mesReferencia, anioReferencia])
+}
+```
 
 ---
 
-## Plan de Implementación
+## 3. Arquitectura y Flujo
 
-1. Definir esquema de persistencia para `Payment` y correr migración.
-2. Crear tipos en `@alentapp/shared` y puerto en el Dominio.
-3. Implementar el repositorio y el caso de uso `CreatePayment`.
-4. Exponer el endpoint en `PaymentController`.
-5. Validar duplicación de pagos por socio, mes y año.
+### 3.1 Repository
+
+```ts
+export interface PaymentRepository {
+  create(payment: Payment): Promise<Payment>;
+  findByMemberAndPeriod(memberId: string, mes: number, anio: number): Promise<Payment | null>;
+}
+```
+
+---
+
+### 3.2 Lógica del Caso de Uso
+
+1. Validar datos
+2. Verificar que el socio exista
+3. Verificar duplicados
+4. Validar monto > 0
+5. Crear con estado PENDING
+6. Persistir
+
+---
+
+## 4. Casos de Borde y Manejo de Errores
+
+| Escenario         | Código |
+| ----------------- | ------ |
+| Duplicado         | 409    |
+| Socio inexistente | 404    |
+| Monto inválido    | 400    |
+| Error DB          | 500    |
+
+---
+
+## 5. Plan de Implementación
+
+1. Definir el esquema de persistencia para `Payment` en Prisma y ejecutar la migración.
+2. Crear los tipos en `@alentapp/shared`:
+   * `PaymentDTO`
+   * `CreatePaymentRequest`
+3. Definir el puerto en el dominio:
+   * `PaymentRepository` con métodos `create` y `findByMemberAndPeriod`
+4. Implementar el repositorio en infraestructura:
+   * Conexión a base de datos mediante Prisma
+   * Implementación de los métodos definidos en el puerto
+5. Implementar el caso de uso `CreatePaymentUseCase`:
+   * Validar datos de entrada
+   * Verificar que el socio exista
+   * Validar que no exista un pago duplicado (idempotencia)
+   * Validar monto mayor a 0
+   * Crear el pago con estado `Pendiente`
+6. Exponer el endpoint en `PaymentController`:
+   * `POST /api/v1/payments`
+   * Manejo de errores y códigos HTTP
+7. Validar reglas de negocio:
+   * Unicidad por `memberId + mes + año`
+   * Integridad referencial (el socio debe existir)
+8. Probar el flujo completo:
+   * Creación exitosa
+   * Error por duplicado
+   * Error por socio inexistente
+   * Error por datos inválidos
+
+---
+
+## 6. Observaciones
+
+* Se garantiza idempotencia mediante restricción única
+* El estado **Vencido** se calcula dinámicamente

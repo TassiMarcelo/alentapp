@@ -1,30 +1,31 @@
 ---
-id: 0016
+id: 0017
 estado: Propuesto
 autor: Abel Di Bella
 fecha: 2026-05-02
-titulo: Cancelación de Pagos
+titulo: Registro de Pago (Marcar como Pagado)
 ---
 
-# TDD-0016: Cancelación de Pagos
+# TDD-0017: Registro de Pago
 
 ## 1. Contexto de Negocio (PRD)
 
 ### Objetivo
 
-Permitir anular un pago sin eliminarlo del sistema, garantizando la trazabilidad de la información y cumpliendo con reglas de auditoría financiera.
+Permitir registrar el pago de una cuota pendiente, actualizando su estado y almacenando la fecha en que se realizó el pago.
 
 ### User Persona
 
 * **Nombre**: Alberto (Tesorero)
-* **Descripción**: Responsable de la gestión financiera del club. Necesita anular pagos registrados por error sin perder el historial, asegurando que la información siga siendo consistente y auditable.
+* **Descripción**: Responsable de registrar los pagos realizados por los socios. Necesita actualizar el estado de las cuotas de manera precisa para reflejar correctamente la situación financiera.
 
 ### Criterios de Aceptación
 
-* No se permite eliminar pagos del sistema
-* El sistema debe cambiar el estado del pago a **Cancelado**
-* No se puede cancelar un pago que ya esté cancelado
-* No se puede cancelar un pago en estado **Pagado**
+* Solo se pueden registrar pagos sobre cuotas en estado **Pendiente**
+* El sistema debe cambiar el estado a **Pagado**
+* Se debe registrar la **fecha de pago**
+* No se puede pagar una cuota ya pagada
+* No se puede pagar una cuota cancelada
 * El pago debe existir
 * El socio asociado debe existir
 
@@ -52,12 +53,14 @@ export interface Payment {
 
 ### 2.2 Contrato de API
 
-**Endpoint:** `PATCH /api/v1/payments/:id/cancel`
+**Endpoint:** `PATCH /api/v1/payments/:id/pay`
 
-**Request:** (No requiere body)
+**Request:**
 
 ```json
-{}
+{
+  "fechaPago": "2026-05-03"
+}
 ```
 
 **Response:**
@@ -65,7 +68,8 @@ export interface Payment {
 ```json
 {
   "id": "uuid",
-  "estado": "Cancelado"
+  "estado": "Pagado",
+  "fechaPago": "2026-05-03"
 }
 ```
 
@@ -110,10 +114,12 @@ export interface PaymentRepository {
 2. Buscar el pago por ID
 3. Si no existe, retornar error
 4. Verificar que el socio asociado exista
-5. Validar que el estado no sea **Pagado**
-6. Validar que el estado no sea **Cancelado**
-7. Cambiar estado a **Cancelado**
-8. Persistir en base de datos
+5. Validar que el estado sea **Pendiente**
+6. Validar que no esté en estado **Pagado**
+7. Validar que no esté en estado **Cancelado**
+8. Registrar la fecha de pago
+9. Cambiar estado a **Pagado**
+10. Persistir en base de datos
 
 ---
 
@@ -123,39 +129,47 @@ export interface PaymentRepository {
 | ---------------------- | --------- | ------ |
 | Pago inexistente       | Error     | 404    |
 | Socio inexistente      | Error     | 404    |
-| Pago ya cancelado      | Error     | 400    |
 | Pago ya realizado      | Error     | 400    |
+| Pago cancelado         | Error     | 400    |
+| Fecha inválida         | Error     | 400    |
 | Error de base de datos | Error     | 500    |
 
 ---
 
 ## 5. Plan de Implementación
 
-1. Definir/actualizar el puerto en el dominio:
+1. Definir el tipo `PayPaymentRequest` en `@alentapp/shared`:
+   * Campo `fechaPago` (obligatorio)
+2. Definir/actualizar el puerto en el dominio:
    * `PaymentRepository` con métodos `findById` y `update`
-2. Implementar el repositorio en infraestructura:
+3. Implementar el repositorio en infraestructura:
    * Acceso a base de datos mediante Prisma
    * Implementación de los métodos `findById` y `update`
-3. Implementar el caso de uso `CancelPaymentUseCase`:
+4. Implementar el caso de uso `PayPaymentUseCase`:
    * Validar ID de entrada
+   * Validar datos de entrada (`fechaPago`)
    * Buscar el pago por ID
    * Verificar que el pago exista
    * Verificar que el socio asociado exista
-   * Validar que el estado no sea `Pagado`
-   * Validar que el estado no sea `Cancelado`
-   * Cambiar el estado a `Cancelado`
-4. Persistir el cambio en la base de datos mediante el repositorio
-5. Exponer el endpoint en `PaymentController`:
-   * `PATCH /api/v1/payments/:id/cancel`
+   * Validar que el estado sea `Pendiente`
+   * Validar que no esté en estado `Pagado`
+   * Validar que no esté en estado `Cancelado`
+   * Registrar la fecha de pago
+   * Cambiar el estado a `Pagado`
+5. Persistir el cambio en la base de datos mediante el repositorio
+6. Exponer el endpoint en `PaymentController`:
+   * `PATCH /api/v1/payments/:id/pay`
    * Manejo de errores y códigos HTTP
-6. Validar reglas de negocio:
-   * No se permite eliminar pagos (solo cancelarlos)
-   * No se puede cancelar un pago ya pagado
-   * No se puede cancelar un pago ya cancelado
-7. Probar el flujo completo:
-   * Cancelación exitosa
+7. Validar reglas de negocio:
+   * Solo se pueden pagar cuotas en estado `Pendiente`
+   * No se puede pagar una cuota ya pagada
+   * No se puede pagar una cuota cancelada
+   * Se debe registrar la fecha efectiva del pago
+8. Probar el flujo completo:
+   * Pago exitoso
    * Error por pago inexistente
    * Error por estado inválido (Pagado o Cancelado)
+   * Error por fecha inválida
    * Error por socio inexistente
    * Error de infraestructura (DB)
 
@@ -163,7 +177,7 @@ export interface PaymentRepository {
 
 ## 6. Observaciones
 
-* No se permite la eliminación física de pagos (principio de trazabilidad)
-* La cancelación es una operación lógica mediante cambio de estado
+* El pago es una operación irreversible desde el punto de vista del estado
+* Se registra la fecha efectiva del pago para auditoría
 * El estado **Vencido** no se persiste, se calcula dinámicamente según la fecha de vencimiento
 * Se mantiene coherencia con reglas de negocio financieras reales

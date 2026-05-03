@@ -1,96 +1,153 @@
 ---
-
-id: 0006
+id: 0015
 estado: Propuesto
-autor: [Abel Di Bella]
-fecha: 2026-04-27
+autor: Abel Di Bella
+fecha: 2026-05-02
 titulo: Actualización de Pagos
-------------------------------
+---
 
-# TDD-0006: Actualización de Pagos
+# TDD-0015: Actualización de Pagos
 
-## Contexto de Negocio (PRD)
+## 1. Contexto de Negocio (PRD)
 
 ### Objetivo
 
-Permitir al tesorero actualizar la información de un pago existente en caso de errores de carga o cambios administrativos, manteniendo la integridad de los datos y evitando modificaciones indebidas en pagos ya procesados.
+Permitir corregir datos de pagos pendientes sin afectar pagos cerrados.
 
 ### User Persona
 
-* **Nombre**: Alberto (Tesorero).
-* **Necesidad**: Corregir errores en los datos de un pago sin comprometer la trazabilidad ni alterar pagos ya realizados.
+* **Nombre**: Alberto (Tesorero)
+* **Descripción**: Responsable de la gestión financiera del club. Necesita corregir errores en los registros de pagos de manera rápida y segura, sin comprometer la integridad de la información ni modificar pagos ya procesados.
 
 ### Criterios de Aceptación
 
-* El sistema debe permitir actualizar los datos de un pago solo si su estado es **"PENDING"**.
-* El sistema no debe permitir modificar pagos con estado **"PAID"** o **"CANCELED"**.
-* El sistema debe validar los datos ingresados (monto, fechas, etc.).
-* El sistema debe confirmar la actualización del pago.
+* Solo estado **Pendiente**
+* No modificar Pagado/Cancelado
+* Validar monto
+* Validar socio existente
 
 ---
 
-## Diseño Técnico (RFC)
+## 2. Diseño Técnico (RFC)
 
-### Modelo de Datos
+### 2.1 Modelo de Dominio (TypeScript)
 
-La entidad `Payment` mantiene la misma estructura definida previamente:
-
-* `id`: Identificador único.
-* `memberId`: Referencia al socio.
-* `monto`: Número positivo.
-* `mesReferencia`: Número entero (1-12).
-* `anioReferencia`: Número entero.
-* `fechaVencimiento`: Fecha límite.
-* `estado`: Enumeración (`PENDING`, `PAID`, `CANCELED`).
-* `fechaPago`: Fecha opcional.
-
----
-
-### Contrato de API (@alentapp/shared)
-
-* **Endpoint**: `PUT /api/v1/payments/:id`
-* **Request Body (UpdatePaymentRequest):**
-
-```ts id="y4x2kp"
-{
-    monto?: number;
-    fechaVencimiento?: string;
+```ts
+export interface Payment {
+  id: string;
+  memberId: string;
+  monto: number;
+  mesReferencia: number;
+  anioReferencia: number;
+  fechaVencimiento: Date;
+  estado: 'Pendiente' | 'Pagado' | 'Cancelado';
+  fechaPago?: Date;
+  created_at: string;
 }
 ```
 
 ---
 
-### Componentes de Arquitectura Hexagonal
+### 2.2 Contrato de API
 
-1. **Domain**:
-   Entidad `Payment` con restricción de modificación según estado.
+**PUT /api/v1/payments/:id**
 
-2. **Application**:
-   Caso de uso `UpdatePayment`, encargado de validar el estado del pago antes de permitir cambios.
+**Request**
 
-3. **Infrastructure**:
+```json
+{
+  "monto": 1500
+}
+```
 
-   * Adaptador de salida: Repositorio para persistencia.
-   * Adaptador de entrada: `PaymentController`.
+**Response**
 
----
-
-## Casos de Borde y Errores
-
-| Escenario               | Resultado Esperado                                    | Código HTTP               |
-| ----------------------- | ----------------------------------------------------- | ------------------------- |
-| Pago inexistente        | Mensaje: "Pago no encontrado"                         | 404 Not Found             |
-| Pago en estado PAID     | Mensaje: "No se puede modificar un pago ya realizado" | 400 Bad Request           |
-| Pago en estado CANCELED | Mensaje: "No se puede modificar un pago cancelado"    | 400 Bad Request           |
-| Datos inválidos         | Mensaje de validación                                 | 400 Bad Request           |
-| Error de conexión a DB  | Mensaje: "Error interno, reintente más tarde"         | 500 Internal Server Error |
+```json
+{
+  "id": "uuid",
+  "estado": "Pendiente"
+}
+```
 
 ---
 
-## Plan de Implementación
+### 2.3 Esquema de Persistencia (Prisma)
 
-1. Definir el tipo `UpdatePaymentRequest` en `@alentapp/shared`.
-2. Implementar el caso de uso `UpdatePayment`.
-3. Validar que el estado del pago sea **PENDING** antes de actualizar.
-4. Implementar método `update` en el repositorio.
-5. Exponer endpoint en `PaymentController`.
+```prisma
+model Payment {
+  id               String    @id @default(uuid())
+  memberId         String
+  monto            Float
+  mesReferencia    Int
+  anioReferencia   Int
+  fechaVencimiento DateTime
+  estado           String
+  fechaPago        DateTime?
+  created_at       DateTime  @default(now())
+
+  @@unique([memberId, mesReferencia, anioReferencia])
+}
+```
+
+---
+
+## 3. Arquitectura y Flujo
+
+1. Validar datos
+2. Buscar pago
+3. Verificar socio
+4. Validar estado Pendiente
+5. Aplicar cambios
+6. Persistir
+
+---
+
+## 4. Casos de Borde y Manejo de Errores
+
+| Escenario         | Código |
+| ----------------- | ------ |
+| No existe         | 404    |
+| Estado inválido   | 400    |
+| Socio inexistente | 404    |
+| Error DB          | 500    |
+
+---
+
+## 5. Plan de Implementación
+
+1. Definir el tipo `UpdatePaymentRequest` en `@alentapp/shared`:
+   * Campos opcionales (`monto`, `fechaVencimiento`)
+2. Definir/actualizar el puerto en el dominio:
+   * `PaymentRepository` con métodos `findById` y `update`
+3. Implementar el repositorio en infraestructura:
+   * Acceso a base de datos con Prisma
+   * Implementación de `findById` y `update`
+4. Implementar el caso de uso `UpdatePaymentUseCase`:
+   * Validar datos de entrada
+   * Buscar el pago por ID
+   * Verificar que el pago exista
+   * Verificar que el socio asociado exista
+   * Validar que el estado sea `Pendiente`
+   * Validar monto > 0 (si se envía)
+   * Validar fecha de vencimiento (si se envía)
+   * Aplicar cambios
+5. Persistir los cambios en base de datos mediante el repositorio
+6. Exponer el endpoint en `PaymentController`:
+   * `PUT /api/v1/payments/:id`
+   * Manejo de errores y códigos HTTP
+7. Validar reglas de negocio:
+   * No modificar pagos en estado `Pagado`
+   * No modificar pagos en estado `Cancelado`
+8. Probar el flujo completo:
+   * Actualización exitosa
+   * Error por pago inexistente
+   * Error por estado inválido
+   * Error por socio inexistente
+   * Error por datos inválidos
+
+---
+
+## 6. Observaciones
+
+* No se modifican pagos cerrados
+* Estado vencido es calculado dinámicamente
