@@ -1,6 +1,6 @@
 ---
 id: 0022
-estado: Propuesto
+estado: Aprobado
 autor: Tassi Marcelo
 fecha: 2026-04-30
 titulo: Actualización de Datos de Lockers

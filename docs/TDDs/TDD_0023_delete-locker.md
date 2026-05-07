@@ -1,6 +1,6 @@
 ---
 id: 0023
-estado: Propuesto
+estado: Aprobado
 autor: Tassi Marcelo
 fecha: 2026-04-30
 titulo: Eliminación de Lockers

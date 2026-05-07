@@ -1,6 +1,6 @@
 ---
 id: 0004
-estado: Propuesto
+estado: Aprobado
 autor: Tassi Marcelo
 fecha: 2026-04-30
 titulo: Listado de lokers
@@ -85,8 +85,3 @@ Permitir que un administrativo visualice el estado actualizado de todos loe Loke
 5. Crear la ruta `GET /api/v1/lockers` en `LockerController` y registrarla en `app.ts`.
 6. Construir la vista `LockersView.tsx` en el Frontend que consuma el endpoint y muestre la tabla con el estado y los datos del socio cuando corresponda.
 
-## Observaciones Adicionales
-
-- Los lockers del sistema pueden ser cargados inicialmente mediante un proceso de inicialización (seed) que precargue los 100 lockers del club en la base de datos, con estado inicial DISPONIBLE.
-
-- Esto garantiza que el sistema tenga desde el inicio la totalidad de los lockers disponibles para su gestión y visualización en el módulo de listado.

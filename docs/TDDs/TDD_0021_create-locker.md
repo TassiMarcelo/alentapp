@@ -1,6 +1,6 @@
 ---
 id: 0021
-estado: Propuesto
+estado: Aprobado
 autor: Tassi Marcelo
 fecha: 2026-04-30
 titulo: Creación de Lockers
