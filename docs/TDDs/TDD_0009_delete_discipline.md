@@ -23,7 +23,7 @@ Permitir a los administrativos eliminar una sanción disciplinaria cargada por e
 
 - El sistema debe pedir confirmación explícita antes de proceder con el borrado mediante un diálogo modal de Chakra UI v3 (componente `Dialog`), coherente con el resto del frontend.
 - El sistema debe validar que la sanción exista antes de intentar eliminarla.
-- El sistema debe realizar un **borrado lógico** (`soft delete`) seteando el campo `deleted_at` con el timestamp del borrado. El registro permanece en la tabla pero deja de aparecer en las consultas estándar (TDD-0010 filtra por `deleted_at: null`).
+- El sistema debe realizar un **borrado lógico** (`soft delete`) seteando el campo `deleted_at` con el timestamp del borrado. El registro permanece en la tabla pero deja de aparecer en las consultas estándar ([TDD-0010](TDD_0010_list_disciplines.md) filtra por `deleted_at: null`).
 - Si la sanción ya tiene `deleted_at != null`, una nueva petición de borrado debe responder `404 Not Found`, ya que para los consumidores el recurso "no existe".
 - Si el borrado es exitoso, la tabla del frontend debe actualizarse automáticamente.
 
@@ -39,7 +39,7 @@ La operación es destructiva y solo requiere el identificador; no se envía cuer
 
 ### Componentes de Arquitectura Hexagonal
 
-- **Domain**: `DisciplineRepository` (método `softDelete(id)`). El método `findById` debe excluir registros con `deleted_at != null` para que la verificación de existencia previa al borrado considere "no existente" a una sanción ya borrada lógicamente.
+- **Domain**: `DisciplineRepository` (método `softDelete(id)`, interfaz definida en [TDD-0007](TDD_0007_create_discipline.md)). El método `findById` debe excluir registros con `deleted_at != null` para que la verificación de existencia previa al borrado considere "no existente" a una sanción ya borrada lógicamente.
 - **Application**: `DeleteDisciplineUseCase` — verifica existencia de la sanción con `findById` (que ya filtra por `deleted_at: null`) y delega el borrado lógico a `DisciplineRepository.softDelete`.
 - **Infrastructure**: `PostgresDisciplineRepository` implementa `softDelete` usando `prisma.discipline.update({ where: { id }, data: { deleted_at: new Date() } })`. `DisciplineController` expone el endpoint, extrae el `id` de los parámetros de ruta y retorna `204` ante éxito.
 
