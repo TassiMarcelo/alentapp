@@ -61,8 +61,8 @@ Todos los campos son opcionales. `member_id` es excluido explícitamente para im
 
 ### Componentes de Arquitectura Hexagonal
 
-- **Domain**: `DisciplineRepository` (método `update(id, data)`). `DisciplineValidator.validateDates` reutilizado para la validación de fechas combinadas.
-- **Application**: `UpdateDisciplineUseCase` — busca la sanción existente con `findById`, fusiona los campos nuevos sobre los existentes, invoca `DisciplineValidator.validateDates` con los valores finales y delega en `DisciplineRepository.update`.
+- **Domain**: `DisciplineRepository` (método `update(id, data)`, interfaz definida en [TDD-0007](TDD_0007_create_discipline.md)). `DisciplineValidator.validateDates` reutilizado para la validación de fechas combinadas (definido en [TDD-0007](TDD_0007_create_discipline.md)).
+- **Application**: `UpdateDisciplineUseCase` — busca la sanción existente con `findById` (que excluye registros con `deleted_at != null`, ver [TDD-0009](TDD_0009_delete_discipline.md)), fusiona los campos nuevos sobre los existentes, invoca `DisciplineValidator.validateDates` con los valores finales y delega en `DisciplineRepository.update`.
 - **Infrastructure**: `PostgresDisciplineRepository` amplía su implementación con el método `update` usando `prisma.discipline.update`. `DisciplineController` expone el endpoint y extrae el `id` de los parámetros de ruta.
 
 ## Casos de Borde y Errores
