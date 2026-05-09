@@ -1,6 +1,6 @@
 ---
 id: 0007
-estado: Pendiente
+estado: Aprobado
 autor: Mateo Lafalce
 fecha: 2026-05-01
 titulo: Registro de Nuevas Sanciones Disciplinarias
