@@ -1,6 +1,6 @@
 ---
 id: 0008
-estado: Pendiente
+estado: Aprobado
 autor: Mateo Lafalce
 fecha: 2026-05-01
 titulo: Actualización de Sanciones Disciplinarias
