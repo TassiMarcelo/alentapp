@@ -30,7 +30,7 @@ Permitir a los administrativos registrar sanciones disciplinarias sobre socios, 
 
 ### Modelo de Dominio (Entidad)
 
-Interfaz TypeScript pura que representa la entidad en la capa de **Domain**. No contiene tipos de Prisma ni decoradores de persistencia; los casos de uso y servicios del dominio operan sobre este contrato. Los TDD-0008, 0009 y 0010 reutilizan esta misma definición.
+Interfaz TypeScript pura que representa la entidad en la capa de **Domain**. No contiene tipos de Prisma ni decoradores de persistencia; los casos de uso y servicios del dominio operan sobre este contrato. Los [TDD-0008](TDD_0008_update_discipline.md), [TDD-0009](TDD_0009_delete_discipline.md) y [TDD-0010](TDD_0010_list_disciplines.md) reutilizan esta misma definición.
 
 ```ts
 export interface Discipline {
@@ -46,7 +46,7 @@ export interface Discipline {
 
 Notas:
 - `start_date` y `end_date` se modelan como `Date` nativo (no `string`); el parseo desde ISO ocurre en la capa de infraestructura/controlador antes de cruzar al dominio.
-- `deleted_at` es `Date | null` y representa el borrado lógico (ver TDD-0009). Siempre `null` para sanciones vigentes.
+- `deleted_at` es `Date | null` y representa el borrado lógico (ver [TDD-0009](TDD_0009_delete_discipline.md)). Siempre `null` para sanciones vigentes.
 - El DTO `DisciplineDTO` (sección siguiente) es la representación serializable de esta entidad y usa `string` ISO para las fechas.
 
 ### Modelo de Datos
