@@ -1,6 +1,6 @@
 ---
 id: 0012
-estado: Propuesto
+estado: Aprobado
 autor: Alejandro Llontop
 fecha: 2026-05-01
 titulo: Actualización de Catálogo de Deportes
@@ -22,8 +22,7 @@ Permitir que un administrativo corrija o modifique la información de los deport
 - El sistema debe permitir únicamente la edición de los campos descripción y cupo.
 - El sistema debe bloquear cualquier intento de modificar el atributo nombre, ya que es inmutable tras la creación.
 - El sistema debe validar que el nuevo cupo sea un número entero mayor a cero.
-- El sistema debe impedir la actualización si el nuevo cupo es inferior a la cantidad de socios con estado ACTIVO en la tabla Enrollment.
-
+- El sistema debe impedir la actualización si el nuevo cupo es inferior a la cantidad de socios vinculados actualmente a ese deporte.
 
 ## Diseño Técnico (RFC)
 

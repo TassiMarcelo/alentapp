@@ -1,6 +1,6 @@
 ---
 id: 0011
-estado: Propuesto
+estado: Aprobado
 autor: Alejandro Llontop
 fecha: 2026-05-01
 titulo: Registro de Catálogo de Deportes
@@ -36,7 +36,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
 - `precioAdicional`: Valor numérico decimal (float) para cargos extra por el deporte.
 - `esFederado`: Valor booleano que indica si el deporte requiere afiliación federativa.
 - `requires_medical_certificate`: Valor booleano que indica si el deporte requiere certificado médico.
-- `estado`: Enumeración (`ACTIVO` | `INACTIVO`).
+
  
 
 ### Contrato de API (@alentapp/shared)
@@ -51,7 +51,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
     precioAdicional: number;
     esFederado: boolean;
     requires_medical_certificate: boolean;
-    estado: 'ACTIVO' | 'INACTIVO';
+
     
 }
 ```
@@ -65,9 +65,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
     precioAdicional: number;
     esFederado: boolean;
     requires_medical_certificate: boolean;
-    estado: 'ACTIVO';
 
-    enrollments: [];
 }
 ```
 
