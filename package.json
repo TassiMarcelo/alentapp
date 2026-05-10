@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prepare": "husky",
     "test": "echo \"Error: no test specified\" && exit 1",
     "e2e:fullstack": "playwright test --config playwright.fullstack.config.ts",
     "e2e:fullstack:ui": "npm run e2e:fullstack -- --ui",
@@ -22,6 +23,9 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
