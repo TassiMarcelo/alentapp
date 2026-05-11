@@ -1,8 +1,8 @@
 ---
 id: 0018
-estado: Pendiente
+estado: Aprobado
 autor: Delozano Matias
-fecha: 2026-05-03
+fecha: 2026-05-10
 titulo: Alta de Certificado Médico
 ---
 

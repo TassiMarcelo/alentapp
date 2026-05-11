@@ -1,8 +1,8 @@
 ---
 id: 0020
-estado: Pendiente
+estado: Aprobado
 autor: Delozano Matias
-fecha: 2026-05-03
+fecha: 2026-05-10
 titulos: Eliminación de Certificado Médico
 ---
 
@@ -24,7 +24,7 @@ Permitir que el personal administrativo pueda eliminar un certificado médico ca
 - El sistema debe solicitar una confirmación explícita mediante un cartel de confirmación que diga "¿Está seguro que desea eliminar este certificado?".
 - Una vez confirmada la acción, el certificado debe desaparecer de la lista de "Aptos Médicos" del socio.
 - Si el certificado que se borra era el único que tenía el socio, este debe figurar automáticamente como "No Apto" para realizar actividades.
-- El sistema debe realizar un borrado físico de la base de datos (hard delete).
+- El sistema debe realizar un borrado lógico (soft delete) en la base de datos.
 - El sistema debe validar que el certificado exista antes de intentar eliminarlo.
 
 
@@ -69,4 +69,3 @@ Se utiliza el campo existente en el esquema para borrado lógico:
 ## Observaciones Adicionales
 
 - **Consistencia de Aptitud**: Al realizar el borrado lógico, cualquier lógica que verifique si un socio está apto (como en el módulo de inscripciones) debe filtrar los certificados donde `deleted_at` sea distinto de `null`.
-- **Auditoría**: Se preserva el registro para cumplir con normativas de salud y trazabilidad, permitiendo saber que el personal administrador realizó la baja si se consulta directamente la base de datos.
