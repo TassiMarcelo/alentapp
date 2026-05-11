@@ -2,7 +2,7 @@
 id: 0019
 estado: Aprobado
 autor: Delozano Matias
-fecha: 2026-05-09
+fecha: 2026-05-10
 titulo: Actualización de Certificado Médico
 ---
 
