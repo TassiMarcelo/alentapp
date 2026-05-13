@@ -6,8 +6,9 @@ import { GetLockersFilters } from '@alentapp/shared';
 
 export class LockerController {
     constructor(
-        private readonly createLockerUseCase: CreateLockerUseCase,
         private readonly getLockersUseCase: GetLockersUseCase,
+        private readonly createLockerUseCase: CreateLockerUseCase,
+        
         
 
     ) {}
@@ -33,7 +34,7 @@ export class LockerController {
             return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
         }
     }
-    
+
     async getAll(
         request: FastifyRequest<{ Querystring: GetLockersFilters }>,
         reply: FastifyReply,

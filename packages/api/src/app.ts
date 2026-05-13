@@ -8,9 +8,10 @@ import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
+import { GetLockersUseCase } from './application/GetLockersUseCase.js';
 import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
-import { GetLockersUseCase } from './application/GetLockersUseCase.js';
+
 
 export function buildApp() {
     const server = Fastify({
@@ -55,8 +56,8 @@ export function buildApp() {
 
     //lokers
     const lockerRepo = new PostgresLockerRepository();
-    const createLockerUseCase = new CreateLockerUseCase(lockerRepo);
     const getLockersUseCase = new GetLockersUseCase(lockerRepo);
+    const createLockerUseCase = new CreateLockerUseCase(lockerRepo);
     const lockerController = new LockerController(getLockersUseCase, createLockerUseCase);
 
     server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
