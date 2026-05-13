@@ -11,7 +11,8 @@ import { PostgresLockerRepository } from './infrastructure/PostgresLockerReposit
 import { GetLockersUseCase } from './application/GetLockersUseCase.js';
 import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
-
+import { UpdateLockerEstadoUseCase } from './application/UpdateLockerEstadoUseCase.js';
+import { LockerEstadoValidator } from './domain/services/LockerEstadoValidator.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -58,10 +59,15 @@ export function buildApp() {
     const lockerRepo = new PostgresLockerRepository();
     const getLockersUseCase = new GetLockersUseCase(lockerRepo);
     const createLockerUseCase = new CreateLockerUseCase(lockerRepo);
-    const lockerController = new LockerController(getLockersUseCase, createLockerUseCase);
+    const lockerEstadoValidator = new LockerEstadoValidator();
+    const updateLockerEstadoUseCase = new UpdateLockerEstadoUseCase(lockerRepo, memberRepo, lockerEstadoValidator);
+    const lockerController = new LockerController(getLockersUseCase, createLockerUseCase,updateLockerEstadoUseCase);
+    
+
 
     server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
     server.get('/api/v1/lockers', lockerController.getAll.bind(lockerController));
+    server.put('/api/v1/lockers/:id/estado', lockerController.updateEstado.bind(lockerController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
