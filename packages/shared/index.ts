@@ -57,3 +57,9 @@ export interface GetLockersFilters {
   estado?: LockerEstado;
   ubicacion?: LockerUbicacion;
 }
+
+export interface UpdateLockerEstadoRequest {
+  estado: LockerEstado;
+  memberId?: string;
+  fechaFinContrato?: string; // "YYYY-MM-DD"
+}
