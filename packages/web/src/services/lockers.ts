@@ -3,6 +3,7 @@ import type { LockerDTO, CreateLockerRequest, GetLockersFilters, UpdateLockerEst
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
 export const lockersService = {
+  
   async create(data: CreateLockerRequest): Promise<LockerDTO> {
     const response = await fetch(`${API_URL}/lockers`, {
       method: 'POST',
@@ -28,7 +29,7 @@ export const lockersService = {
       throw new Error(err.error || 'Error al obtener los lockers');
     }
     return response.json();
-},
+    },
 
   async updateEstado(id: string, data: UpdateLockerEstadoRequest): Promise<LockerDTO> {
     const response = await fetch(`${API_URL}/lockers/${id}/estado`, {
@@ -41,7 +42,8 @@ export const lockersService = {
       throw new Error(err.error || 'Error al actualizar el estado del locker');
     }
     return response.json();
-},
+    },
+
   async update(id: string, data: UpdateLockerRequest): Promise<LockerDTO> {
     const response = await fetch(`${API_URL}/lockers/${id}`, {
       method: 'PUT',
@@ -53,7 +55,17 @@ export const lockersService = {
       throw new Error(err.error || 'Error al actualizar el locker');
     }
     return response.json();
-},
+    },
+
+    async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/lockers/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al eliminar el locker');
+    }
+    },
 
 };
 
