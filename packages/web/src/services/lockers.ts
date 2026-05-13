@@ -1,4 +1,4 @@
-import type { LockerDTO, CreateLockerRequest } from '@alentapp/shared';
+import type { LockerDTO, CreateLockerRequest, GetLockersFilters } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
@@ -15,4 +15,19 @@ export const lockersService = {
     }
     return response.json();
   },
+
+  async getAll(filters?: GetLockersFilters): Promise<LockerDTO[]> {
+    const params = new URLSearchParams();
+    if (filters?.estado) params.set('estado', filters.estado);
+    if (filters?.ubicacion) params.set('ubicacion', filters.ubicacion);
+
+    const url = `${API_URL}/lockers${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al obtener los lockers');
+    }
+    return response.json();
+},
 };
+
