@@ -7,6 +7,9 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
+import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
+import { LockerController } from './delivery/LockerController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -43,10 +46,18 @@ export function buildApp() {
         deleteMemberUseCase
     );
 
+    
     server.get('/api/v1/socios', memberController.getAll.bind(memberController));
     server.post('/api/v1/socios', memberController.create.bind(memberController));
     server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
     server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
+
+    //lokers
+    const lockerRepo = new PostgresLockerRepository();
+    const createLockerUseCase = new CreateLockerUseCase(lockerRepo);
+    const lockerController = new LockerController(createLockerUseCase);
+
+    server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
