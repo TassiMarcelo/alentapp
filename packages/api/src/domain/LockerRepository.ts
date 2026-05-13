@@ -11,5 +11,6 @@ export interface LockerRepository {
   updateEstado(id: string, data: UpdateLockerEstadoRequest): Promise<LockerDTO>;
   findById(id: string): Promise<LockerDTO | null>;
   update(id: string, data: UpdateLockerRequest): Promise<LockerDTO>;
+  delete(id: string): Promise<void>;
 }
 
