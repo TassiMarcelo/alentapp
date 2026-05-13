@@ -52,3 +52,8 @@ export interface CreateLockerRequest {
   numero: number;
   ubicacion: LockerUbicacion;
 }
+
+export interface GetLockersFilters {
+  estado?: LockerEstado;
+  ubicacion?: LockerUbicacion;
+}
