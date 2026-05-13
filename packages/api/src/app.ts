@@ -13,6 +13,8 @@ import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
 import { UpdateLockerEstadoUseCase } from './application/UpdateLockerEstadoUseCase.js';
 import { LockerEstadoValidator } from './domain/services/LockerEstadoValidator.js';
+import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
+
 
 export function buildApp() {
     const server = Fastify({
@@ -61,14 +63,15 @@ export function buildApp() {
     const createLockerUseCase = new CreateLockerUseCase(lockerRepo);
     const lockerEstadoValidator = new LockerEstadoValidator();
     const updateLockerEstadoUseCase = new UpdateLockerEstadoUseCase(lockerRepo, memberRepo, lockerEstadoValidator);
-    const lockerController = new LockerController(getLockersUseCase, createLockerUseCase,updateLockerEstadoUseCase);
-    
+    const updateLockerUseCase = new UpdateLockerUseCase(lockerRepo);
+    const lockerController = new LockerController(getLockersUseCase, createLockerUseCase, updateLockerEstadoUseCase, updateLockerUseCase);
 
 
     server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
     server.get('/api/v1/lockers', lockerController.getAll.bind(lockerController));
     server.put('/api/v1/lockers/:id/estado', lockerController.updateEstado.bind(lockerController));
-
+    server.put('/api/v1/lockers/:id', lockerController.update.bind(lockerController));
+    
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
     });
