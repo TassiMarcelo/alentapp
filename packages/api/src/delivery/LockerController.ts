@@ -7,6 +7,7 @@ import { UpdateLockerEstadoUseCase } from '../application/UpdateLockerEstadoUseC
 import { UpdateLockerEstadoRequest } from '@alentapp/shared';
 import { UpdateLockerUseCase } from '../application/UpdateLockerUseCase.js';
 import { UpdateLockerRequest } from '@alentapp/shared';
+import { DeleteLockerUseCase } from '../application/DeleteLockerUseCase.js';
 
 export class LockerController {
     constructor(
@@ -14,6 +15,7 @@ export class LockerController {
         private readonly createLockerUseCase: CreateLockerUseCase,
         private readonly updateLockerEstadoUseCase: UpdateLockerEstadoUseCase,
         private readonly updateLockerUseCase: UpdateLockerUseCase,
+        private readonly deleteLockerUseCase: DeleteLockerUseCase,
 
     ) {}
 
@@ -116,4 +118,25 @@ export class LockerController {
         }
     }
 
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteLockerUseCase.execute(id);
+            return reply.status(204).send();
+        } catch (error: any) {
+            if (error.message === 'El locker no existe') {
+                return reply.status(404).send({ error: error.message });
+            }
+            if (error.message === 'No se puede eliminar un locker que está ocupado') {
+                return reply.status(409).send({ error: error.message });
+            }
+            if (error.message === 'El id ingresado no es válido') {
+                return reply.status(400).send({ error: error.message });
+            }
+            return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
+        }
+    }
 }
