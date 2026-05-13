@@ -2,7 +2,7 @@ import {
   Table, Button, Heading, HStack, Stack, Text, Box,
   Flex, Spinner, Center, Input, Badge,
 } from '@chakra-ui/react';
-import { LuRefreshCw, LuPlus, LuPencil } from 'react-icons/lu';
+import { LuRefreshCw, LuPlus, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { lockersService } from '../services/lockers';
 import { membersService } from '../services/members';
@@ -16,7 +16,6 @@ import {
   SelectRoot, SelectTrigger, SelectValueText,
   SelectContent, SelectItem, createListCollection,
 } from '../components/ui/select';
-import { LuRefreshCw, LuPlus, LuPencil, LuTrash2 } from 'react-icons/lu';
 
 const ubicacionCreateOptions = createListCollection({
   items: [
