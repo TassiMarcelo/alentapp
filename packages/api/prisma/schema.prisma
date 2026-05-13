@@ -33,6 +33,33 @@ model Member {
     category   MemberCategory
     status     MemberStatus   @default(Activo)
     created_at DateTime       @default(now())
-
+    lockers Locker[] //
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
+}
+
+// Esquema para lockers 
+//
+enum LockerEstado {
+    DISPONIBLE
+    OCUPADO
+    MANTENIMIENTO
+}
+
+enum LockerUbicacion {
+    VESTUARIO_MASCULINO
+    VESTUARIO_FEMENINO
+    NINOS
+}
+
+model Locker {
+    id               String          @id @default(uuid())
+    numero           Int             @unique
+    ubicacion        LockerUbicacion
+    estado           LockerEstado    @default(DISPONIBLE)
+    fechaFinContrato DateTime?       @db.Date
+    member_id        String?
+    member           Member?         @relation(fields: [member_id], references: [id])
+    created_at       DateTime        @default(now())
+
+    @@map("lockers")
 }
