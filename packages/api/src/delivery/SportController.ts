@@ -1,13 +1,25 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CreateSportUseCase } from '../application/CreateSportUseCase.js';
 import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
+import { GetSportsUseCase } from '../application/GetSportsUseCase.js';
 import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
 
 export class SportController {
     constructor(
+        private readonly getSportsUseCase: GetSportsUseCase,
         private readonly createSportUseCase: CreateSportUseCase,
         private readonly updateSportUseCase: UpdateSportUseCase
     ) {}
+
+    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const sports = await this.getSportsUseCase.execute();
+            return reply.status(200).send(sports);
+        } catch (error: any) {
+            console.error('Get Sports Error:', error);
+            return reply.status(500).send({ error: 'Error interno al obtener los deportes' });
+        }
+    }
 
     async create(
         request: FastifyRequest<{ Body: CreateSportRequest }>,
