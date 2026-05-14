@@ -2,7 +2,7 @@ import {
   Table, Button, Heading, HStack, Stack, Text, Box,
   Flex, Spinner, Center, Input, Badge, IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
@@ -17,7 +17,7 @@ import {
   SelectContent, SelectItem, createListCollection,
 } from '../components/ui/select';
 
-type Modal = 'none' | 'create' | 'edit';
+type Modal = 'none' | 'create' | 'edit' | 'delete';
 
 type EditForm = {
   reason: string;
@@ -55,6 +55,7 @@ export function DisciplinesView() {
     is_total_suspension: false,
     member_id: '',
   });
+  const [deletingDiscipline, setDeletingDiscipline] = useState<DisciplineDTO | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editOriginal, setEditOriginal] = useState<EditForm | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
@@ -164,6 +165,26 @@ export function DisciplinesView() {
       setEditOriginal(null);
     } catch (err: any) {
       alert(err.message || 'Error al actualizar la sanción');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openDelete = (d: DisciplineDTO) => {
+    setDeletingDiscipline(d);
+    setModal('delete');
+  };
+
+  const handleDelete = async () => {
+    if (!deletingDiscipline) return;
+    setIsSubmitting(true);
+    try {
+      await disciplinesService.delete(deletingDiscipline.id);
+      await fetchDisciplines();
+      setModal('none');
+      setDeletingDiscipline(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar la sanción');
     } finally {
       setIsSubmitting(false);
     }
@@ -309,6 +330,38 @@ export function DisciplinesView() {
         </DialogContent>
       </DialogRoot>
 
+      {/* Modal Eliminar */}
+      <DialogRoot
+        role="alertdialog"
+        open={modal === 'delete'}
+        onOpenChange={(e) => {
+          if (!e.open) {
+            setModal('none');
+            setDeletingDiscipline(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader><DialogTitle>Eliminar Sanción Disciplinaria</DialogTitle></DialogHeader>
+          <DialogBody>
+            <Text>
+              ¿Confirmás la eliminación de esta sanción
+              {deletingDiscipline ? ` de ${memberName(deletingDiscipline.member_id)}` : ''}?
+              Esta acción no puede deshacerse desde la interfaz.
+            </Text>
+          </DialogBody>
+          <DialogFooter>
+            <DialogActionTrigger asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogActionTrigger>
+            <Button colorPalette="red" loading={isSubmitting} onClick={handleDelete}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+          <DialogCloseTrigger />
+        </DialogContent>
+      </DialogRoot>
+
       {/* Header */}
       <Box px="8" py="6">
         <Flex justify="space-between" align="center" mb="6">
@@ -393,14 +446,25 @@ export function DisciplinesView() {
                     </Badge>
                   </Table.Cell>
                   <Table.Cell textAlign="end">
-                    <IconButton
-                      aria-label="Editar sanción"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openEdit(d)}
-                    >
-                      <LuPencil />
-                    </IconButton>
+                    <HStack gap="1" justify="end">
+                      <IconButton
+                        aria-label="Editar sanción"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEdit(d)}
+                      >
+                        <LuPencil />
+                      </IconButton>
+                      <IconButton
+                        aria-label="Eliminar sanción"
+                        size="sm"
+                        variant="ghost"
+                        colorPalette="red"
+                        onClick={() => openDelete(d)}
+                      >
+                        <LuTrash2 />
+                      </IconButton>
+                    </HStack>
                   </Table.Cell>
                 </Table.Row>
               ))}
