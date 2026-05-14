@@ -1,4 +1,8 @@
-import type { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import type {
+  DisciplineDTO,
+  CreateDisciplineRequest,
+  ListDisciplinesFilters,
+} from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
@@ -12,6 +16,21 @@ export const disciplinesService = {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || 'Error al registrar la sanción');
+    }
+    return response.json();
+  },
+
+  async list(filters: ListDisciplinesFilters = {}): Promise<DisciplineDTO[]> {
+    const params = new URLSearchParams();
+    if (filters.member_id) params.set('member_id', filters.member_id);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.sort_desc !== undefined) params.set('sort_desc', String(filters.sort_desc));
+
+    const qs = params.toString();
+    const response = await fetch(`${API_URL}/disciplines${qs ? `?${qs}` : ''}`);
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al obtener las sanciones');
     }
     return response.json();
   },

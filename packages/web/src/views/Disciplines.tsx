@@ -6,7 +6,7 @@ import { LuPlus } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
-import type { DisciplineDTO, MemberDTO } from '@alentapp/shared';
+import type { DisciplineDTO, MemberDTO, DisciplineStatus } from '@alentapp/shared';
 import {
   DialogRoot, DialogContent, DialogHeader, DialogTitle,
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
@@ -19,6 +19,13 @@ import {
 
 type Modal = 'none' | 'create';
 
+const STATUS_OPTIONS: { label: string; value: '' | DisciplineStatus }[] = [
+  { label: 'Todos', value: '' },
+  { label: 'Vigentes', value: 'active' },
+  { label: 'Vencidas', value: 'expired' },
+  { label: 'Por iniciar', value: 'upcoming' },
+];
+
 export function DisciplinesView() {
   const [disciplines, setDisciplines] = useState<DisciplineDTO[]>([]);
   const [members, setMembers] = useState<MemberDTO[]>([]);
@@ -26,6 +33,8 @@ export function DisciplinesView() {
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filterMemberId, setFilterMemberId] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<'' | DisciplineStatus>('');
   const [createForm, setCreateForm] = useState({
     reason: '',
     start_date: '',
@@ -38,6 +47,15 @@ export function DisciplinesView() {
     items: members.map((m) => ({ label: `${m.name} (DNI: ${m.dni})`, value: m.id })),
   });
 
+  const memberFilterCollection = createListCollection({
+    items: [
+      { label: 'Todos los socios', value: '' },
+      ...members.map((m) => ({ label: `${m.name} (DNI: ${m.dni})`, value: m.id })),
+    ],
+  });
+
+  const statusFilterCollection = createListCollection({ items: STATUS_OPTIONS });
+
   const fetchMembers = async () => {
     try {
       const data = await membersService.getAll();
@@ -45,18 +63,34 @@ export function DisciplinesView() {
     } catch { /* silencioso */ }
   };
 
+  const fetchDisciplines = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await disciplinesService.list({
+        member_id: filterMemberId || undefined,
+        status: filterStatus || undefined,
+      });
+      setDisciplines(data);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar las sanciones');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const newDiscipline = await disciplinesService.create({
+      await disciplinesService.create({
         reason: createForm.reason,
         start_date: new Date(createForm.start_date).toISOString(),
         end_date: new Date(createForm.end_date).toISOString(),
         is_total_suspension: createForm.is_total_suspension,
         member_id: createForm.member_id,
       });
-      setDisciplines((prev) => [newDiscipline, ...prev]);
+      await fetchDisciplines();
       setModal('none');
       setCreateForm({ reason: '', start_date: '', end_date: '', is_total_suspension: false, member_id: '' });
     } catch (err: any) {
@@ -66,7 +100,8 @@ export function DisciplinesView() {
     }
   };
 
-  useEffect(() => { void fetchMembers(); setIsLoading(false); }, []);
+  useEffect(() => { void fetchMembers(); }, []);
+  useEffect(() => { void fetchDisciplines(); }, [filterMemberId, filterStatus]);
 
   const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? id;
 
@@ -156,6 +191,43 @@ export function DisciplinesView() {
           </Button>
         </Flex>
 
+        {/* Filtros */}
+        <HStack gap="4" mb="6" align="end">
+          <Field label="Filtrar por socio">
+            <SelectRoot
+              collection={memberFilterCollection}
+              value={[filterMemberId]}
+              onValueChange={(val) => setFilterMemberId(val.value[0] ?? '')}
+            >
+              <SelectTrigger>
+                <SelectValueText placeholder="Todos los socios" />
+              </SelectTrigger>
+              <SelectContent>
+                {memberFilterCollection.items.map((item) => (
+                  <SelectItem key={item.value || 'all'} item={item}>{item.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </SelectRoot>
+          </Field>
+
+          <Field label="Estado de vigencia">
+            <SelectRoot
+              collection={statusFilterCollection}
+              value={[filterStatus]}
+              onValueChange={(val) => setFilterStatus((val.value[0] ?? '') as '' | DisciplineStatus)}
+            >
+              <SelectTrigger>
+                <SelectValueText placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value || 'all'} item={opt}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </SelectRoot>
+          </Field>
+        </HStack>
+
         {isLoading ? (
           <Center py="16"><Spinner size="xl" /></Center>
         ) : error ? (
@@ -163,9 +235,9 @@ export function DisciplinesView() {
         ) : disciplines.length === 0 ? (
           <Center py="16">
             <Stack align="center" gap="2">
-              <Text color="gray.500">No hay sanciones registradas.</Text>
+              <Text color="gray.500">No hay sanciones que coincidan con los filtros.</Text>
               <Button size="sm" variant="outline" onClick={() => setModal('create')}>
-                Registrar primera sanción
+                Registrar nueva sanción
               </Button>
             </Stack>
           </Center>
