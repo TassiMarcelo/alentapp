@@ -13,6 +13,8 @@ import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 import { CreateSportUseCase } from './application/CreateSportUseCase.js';
+import { UpdateSportUseCase } from './application/UpdateSportUseCase.js';
+import { SportValidator } from './domain/services/SportValidator.js';
 import { SportController } from './delivery/SportController.js';
 import { UpdateLockerEstadoUseCase } from './application/UpdateLockerEstadoUseCase.js';
 import { LockerEstadoValidator } from './domain/services/LockerEstadoValidator.js';
@@ -81,11 +83,13 @@ export function buildApp() {
 
     // sports
     const sportRepo = new PostgresSportRepository();
+    const sportValidator = new SportValidator();
     const createSportUseCase = new CreateSportUseCase(sportRepo);
-    const sportController = new SportController(createSportUseCase);
+    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator);
+    const sportController = new SportController(createSportUseCase, updateSportUseCase);
 
     server.post('/api/v1/sports', sportController.create.bind(sportController));
-    
+    server.put('/api/v1/sports/:id', sportController.update.bind(sportController));
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
     });
