@@ -18,6 +18,7 @@ import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
 import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
 import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
+import { ListDisciplinesUseCase } from './application/ListDisciplinesUseCase.js';
 import { DisciplineController } from './delivery/DisciplineController.js';
 
 export function buildApp() {
@@ -84,9 +85,11 @@ export function buildApp() {
     const disciplineRepo = new PostgresDisciplineRepository();
     const disciplineValidator = new DisciplineValidator();
     const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
-    const disciplineController = new DisciplineController(createDisciplineUseCase);
+    const listDisciplinesUseCase = new ListDisciplinesUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, listDisciplinesUseCase);
 
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
+    server.get('/api/v1/disciplines', disciplineController.list.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
