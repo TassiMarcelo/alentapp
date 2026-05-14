@@ -1,6 +1,7 @@
 import type {
   DisciplineDTO,
   CreateDisciplineRequest,
+  UpdateDisciplineRequest,
   ListDisciplinesFilters,
 } from '@alentapp/shared';
 
@@ -31,6 +32,19 @@ export const disciplinesService = {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || 'Error al obtener las sanciones');
+    }
+    return response.json();
+  },
+
+  async update(id: string, data: UpdateDisciplineRequest): Promise<DisciplineDTO> {
+    const response = await fetch(`${API_URL}/disciplines/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al actualizar la sanción');
     }
     return response.json();
   },
