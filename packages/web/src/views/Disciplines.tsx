@@ -1,8 +1,8 @@
 import {
   Table, Button, Heading, HStack, Stack, Text, Box,
-  Flex, Spinner, Center, Input, Badge,
+  Flex, Spinner, Center, Input, Badge, IconButton,
 } from '@chakra-ui/react';
-import { LuPlus } from 'react-icons/lu';
+import { LuPlus, LuPencil } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
@@ -17,7 +17,20 @@ import {
   SelectContent, SelectItem, createListCollection,
 } from '../components/ui/select';
 
-type Modal = 'none' | 'create';
+type Modal = 'none' | 'create' | 'edit';
+
+type EditForm = {
+  reason: string;
+  start_date: string;
+  end_date: string;
+  is_total_suspension: boolean;
+};
+
+const toLocalInput = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 const STATUS_OPTIONS: { label: string; value: '' | DisciplineStatus }[] = [
   { label: 'Todos', value: '' },
@@ -41,6 +54,14 @@ export function DisciplinesView() {
     end_date: '',
     is_total_suspension: false,
     member_id: '',
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editOriginal, setEditOriginal] = useState<EditForm | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({
+    reason: '',
+    start_date: '',
+    end_date: '',
+    is_total_suspension: false,
   });
 
   const memberCollection = createListCollection({
@@ -95,6 +116,54 @@ export function DisciplinesView() {
       setCreateForm({ reason: '', start_date: '', end_date: '', is_total_suspension: false, member_id: '' });
     } catch (err: any) {
       alert(err.message || 'Error al registrar la sanción');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEdit = (d: DisciplineDTO) => {
+    const initial: EditForm = {
+      reason: d.reason,
+      start_date: toLocalInput(d.start_date),
+      end_date: toLocalInput(d.end_date),
+      is_total_suspension: d.is_total_suspension,
+    };
+    setEditingId(d.id);
+    setEditOriginal(initial);
+    setEditForm(initial);
+    setModal('edit');
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !editOriginal) return;
+
+    const diff: Partial<EditForm> & { start_date?: string; end_date?: string } = {};
+    if (editForm.reason !== editOriginal.reason) diff.reason = editForm.reason;
+    if (editForm.start_date !== editOriginal.start_date) {
+      diff.start_date = new Date(editForm.start_date).toISOString();
+    }
+    if (editForm.end_date !== editOriginal.end_date) {
+      diff.end_date = new Date(editForm.end_date).toISOString();
+    }
+    if (editForm.is_total_suspension !== editOriginal.is_total_suspension) {
+      diff.is_total_suspension = editForm.is_total_suspension;
+    }
+
+    if (Object.keys(diff).length === 0) {
+      setModal('none');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await disciplinesService.update(editingId, diff);
+      await fetchDisciplines();
+      setModal('none');
+      setEditingId(null);
+      setEditOriginal(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar la sanción');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,6 +251,64 @@ export function DisciplinesView() {
         </DialogContent>
       </DialogRoot>
 
+      {/* Modal Editar */}
+      <DialogRoot open={modal === 'edit'} onOpenChange={(e) => !e.open && setModal('none')}>
+        <DialogContent>
+          <form onSubmit={handleEdit}>
+            <DialogHeader><DialogTitle>Editar Sanción Disciplinaria</DialogTitle></DialogHeader>
+            <DialogBody>
+              <Stack gap="4">
+                <Field label="Motivo" required>
+                  <Input
+                    placeholder="Descripción de la falta cometida"
+                    value={editForm.reason}
+                    onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="Fecha de inicio" required>
+                  <Input
+                    type="datetime-local"
+                    value={editForm.start_date}
+                    onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="Fecha de fin" required>
+                  <Input
+                    type="datetime-local"
+                    value={editForm.end_date}
+                    onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="¿Suspensión total?">
+                  <HStack>
+                    <input
+                      type="checkbox"
+                      id="edit_is_total_suspension"
+                      checked={editForm.is_total_suspension}
+                      onChange={(e) => setEditForm({ ...editForm, is_total_suspension: e.target.checked })}
+                    />
+                    <label htmlFor="edit_is_total_suspension">Sí, es suspensión total</label>
+                  </HStack>
+                </Field>
+              </Stack>
+            </DialogBody>
+            <DialogFooter>
+              <DialogActionTrigger asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogActionTrigger>
+              <Button type="submit" loading={isSubmitting}>Guardar</Button>
+            </DialogFooter>
+            <DialogCloseTrigger />
+          </form>
+        </DialogContent>
+      </DialogRoot>
+
       {/* Header */}
       <Box px="8" py="6">
         <Flex justify="space-between" align="center" mb="6">
@@ -250,6 +377,7 @@ export function DisciplinesView() {
                 <Table.ColumnHeader>Inicio</Table.ColumnHeader>
                 <Table.ColumnHeader>Fin</Table.ColumnHeader>
                 <Table.ColumnHeader>Tipo</Table.ColumnHeader>
+                <Table.ColumnHeader textAlign="end">Acciones</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -263,6 +391,16 @@ export function DisciplinesView() {
                     <Badge colorPalette={d.is_total_suspension ? 'red' : 'orange'}>
                       {d.is_total_suspension ? 'Total' : 'Parcial'}
                     </Badge>
+                  </Table.Cell>
+                  <Table.Cell textAlign="end">
+                    <IconButton
+                      aria-label="Editar sanción"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openEdit(d)}
+                    >
+                      <LuPencil />
+                    </IconButton>
                   </Table.Cell>
                 </Table.Row>
               ))}
