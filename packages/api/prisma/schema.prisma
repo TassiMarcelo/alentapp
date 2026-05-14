@@ -63,3 +63,18 @@ model Locker {
 
     @@map("lockers")
 }
+
+// Esquema para Deportes (Sports)
+model Sport {
+    id                           String   @id @default(uuid())
+    nombre                       String   @unique
+    descripcion                  String
+    cupoMaximo                   Int
+    precioAdicional              Float
+    esFederado                   Boolean
+    requires_medical_certificate Boolean
+    created_at                   DateTime @default(now())
+
+    @@map("sports")
+}
+
