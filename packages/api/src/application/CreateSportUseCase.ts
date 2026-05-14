@@ -9,6 +9,12 @@ export class CreateSportUseCase {
             throw new Error('El nombre y la capacidad máxima son requeridos');
         }
 
+        const nombreLimpio = data.nombre.trim();
+        if (nombreLimpio === '') {
+            throw new Error('El nombre del deporte no puede estar vacío');
+        }
+        data.nombre = nombreLimpio;
+
         if (data.cupoMaximo <= 0) {
             throw new Error('El cupo máximo debe ser mayor a cero');
         }
