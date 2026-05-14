@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
-import { DisciplineRepository } from '../domain/DisciplineRepository.js';
+import { DisciplineRepository, FindAllDisciplinesFilters } from '../domain/DisciplineRepository.js';
 import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {
@@ -23,6 +23,32 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
       },
     });
     return this.mapToDTO(discipline);
+  }
+
+  async findAll(filters: FindAllDisciplinesFilters): Promise<DisciplineDTO[]> {
+    const where: any = { deleted_at: null };
+
+    if (filters.member_id) {
+      where.member_id = filters.member_id;
+    }
+
+    if (filters.status && filters.at) {
+      if (filters.status === 'active') {
+        where.start_date = { lte: filters.at };
+        where.end_date = { gte: filters.at };
+      } else if (filters.status === 'expired') {
+        where.end_date = { lt: filters.at };
+      } else if (filters.status === 'upcoming') {
+        where.start_date = { gt: filters.at };
+      }
+    }
+
+    const disciplines = await prisma.discipline.findMany({
+      where,
+      orderBy: { start_date: filters.sort_desc === false ? 'asc' : 'desc' },
+    });
+
+    return disciplines.map((d) => this.mapToDTO(d));
   }
 
   private mapToDTO(discipline: any): DisciplineDTO {
