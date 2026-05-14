@@ -15,6 +15,10 @@ import { UpdateLockerEstadoUseCase } from './application/UpdateLockerEstadoUseCa
 import { LockerEstadoValidator } from './domain/services/LockerEstadoValidator.js';
 import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
 import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
+import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -75,6 +79,14 @@ export function buildApp() {
     server.put('/api/v1/lockers/:id/estado', lockerController.updateEstado.bind(lockerController));
     server.put('/api/v1/lockers/:id', lockerController.update.bind(lockerController));
     server.delete('/api/v1/lockers/:id', lockerController.delete.bind(lockerController));
+
+    // disciplines
+    const disciplineRepo = new PostgresDisciplineRepository();
+    const disciplineValidator = new DisciplineValidator();
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
+    const disciplineController = new DisciplineController(createDisciplineUseCase);
+
+    server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })

@@ -1,6 +1,6 @@
 import { Box, SimpleGrid, Heading, Text, VStack } from "@chakra-ui/react";
 import { SectionCard } from "../components/SectionCard";
-import { LuUsers, LuLock } from "react-icons/lu";
+import { LuUsers, LuLock, LuShieldAlert } from "react-icons/lu";
 
 export function HomeView() {
   return (
@@ -36,23 +36,12 @@ export function HomeView() {
           to="/lockers"
           icon={LuLock}
         />
-        {/* Future sections can be added here following the same pattern */}
-        <Box 
-          p="6" 
-          bg="bg.muted/30" 
-          borderRadius="2xl" 
-          borderWidth="1px" 
-          borderColor="border.subtle"
-          borderStyle="dashed"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          minH="250px"
-        >
-          <VStack>
-            <Text color="fg.muted" fontWeight="medium">Próximamente nuevas secciones</Text>
-          </VStack>
-        </Box>
+        <SectionCard
+          title="Disciplinas"
+          description="Registra y gestioná las sanciones disciplinarias aplicadas a los socios del club."
+          to="/disciplines"
+          icon={LuShieldAlert}
+        />
       </SimpleGrid>
     </Box>
   );

@@ -33,7 +33,8 @@ model Member {
     category   MemberCategory
     status     MemberStatus   @default(Activo)
     created_at DateTime       @default(now())
-    lockers Locker[] //
+    lockers     Locker[]
+    disciplines Discipline[]
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
 }
 
@@ -62,4 +63,17 @@ model Locker {
     created_at       DateTime        @default(now())
 
     @@map("lockers")
+}
+
+model Discipline {
+    id                  String    @id @default(uuid())
+    reason              String
+    start_date          DateTime
+    end_date            DateTime
+    is_total_suspension Boolean   @default(false)
+    member_id           String
+    member              Member    @relation(fields: [member_id], references: [id])
+    deleted_at          DateTime?
+
+    @@map("disciplines")
 }
