@@ -20,6 +20,7 @@ import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
 import { ListDisciplinesUseCase } from './application/ListDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
 import { DisciplineController } from './delivery/DisciplineController.js';
 
 export function buildApp() {
@@ -88,11 +89,13 @@ export function buildApp() {
     const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
     const listDisciplinesUseCase = new ListDisciplinesUseCase(disciplineRepo);
     const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo, disciplineValidator);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, listDisciplinesUseCase, updateDisciplineUseCase);
+    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, listDisciplinesUseCase, updateDisciplineUseCase, deleteDisciplineUseCase);
 
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.get('/api/v1/disciplines', disciplineController.list.bind(disciplineController));
     server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
+    server.delete('/api/v1/disciplines/:id', disciplineController.delete.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
