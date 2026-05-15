@@ -40,9 +40,6 @@ export function SportsView() {
   const [editForm, setEditForm] = useState({
     descripcion: '',
     cupoMaximo: '',
-    precioAdicional: '',
-    esFederado: false,
-    requires_medical_certificate: false,
   });
 
   const [assignForm, setAssignForm] = useState({ memberId: '' });
@@ -103,9 +100,6 @@ export function SportsView() {
       await sportsService.update(selectedSport.id, {
         descripcion: editForm.descripcion,
         cupoMaximo: Number(editForm.cupoMaximo),
-        precioAdicional: Number(editForm.precioAdicional || 0),
-        esFederado: editForm.esFederado,
-        requires_medical_certificate: editForm.requires_medical_certificate,
       });
       setModal('none');
       void fetchSports();
@@ -204,9 +198,6 @@ export function SportsView() {
                             setEditForm({
                               descripcion: sport.descripcion || '',
                               cupoMaximo: sport.cupoMaximo.toString(),
-                              precioAdicional: sport.precioAdicional.toString(),
-                              esFederado: sport.esFederado,
-                              requires_medical_certificate: sport.requires_medical_certificate,
                             });
                             setModal('edit');
                           }}
@@ -299,17 +290,6 @@ export function SportsView() {
                 <Field label="Cupo Máximo" required>
                   <Input type="number" min={1} placeholder="Ej. 15" value={editForm.cupoMaximo} onChange={(e) => setEditForm({ ...editForm, cupoMaximo: e.target.value })} required />
                 </Field>
-                <Field label="Precio Adicional ($)">
-                  <Input type="number" step="0.01" min={0} placeholder="Ej. 1200" value={editForm.precioAdicional} onChange={(e) => setEditForm({ ...editForm, precioAdicional: e.target.value })} />
-                </Field>
-                <Box display="flex" alignItems="center" gap="2" mt="2">
-                  <input type="checkbox" id="editEsFederado" checked={editForm.esFederado} onChange={(e) => setEditForm({ ...editForm, esFederado: e.target.checked })} />
-                  <label htmlFor="editEsFederado">Es Federado</label>
-                </Box>
-                <Box display="flex" alignItems="center" gap="2">
-                  <input type="checkbox" id="editRequiresMedical" checked={editForm.requires_medical_certificate} onChange={(e) => setEditForm({ ...editForm, requires_medical_certificate: e.target.checked })} />
-                  <label htmlFor="editRequiresMedical">Requiere Certificado Médico</label>
-                </Box>
               </Stack>
             </DialogBody>
             <DialogFooter>
