@@ -95,3 +95,39 @@ export interface UpdateLockerRequest {
   numero?: number;
   ubicacion?: LockerUbicacion;
 }
+
+
+// ==========================================
+// Discipline
+// ==========================================
+export interface DisciplineDTO {
+  id: string;
+  reason: string;
+  start_date: string; // ISO DateTime
+  end_date: string;   // ISO DateTime
+  is_total_suspension: boolean;
+  member_id: string;
+}
+
+export interface CreateDisciplineRequest {
+  reason: string;
+  start_date: string; // ISO DateTime (YYYY-MM-DDTHH:mm:ssZ)
+  end_date: string;
+  is_total_suspension: boolean;
+  member_id: string;
+}
+
+export interface UpdateDisciplineRequest {
+  reason?: string;
+  start_date?: string; // ISO DateTime
+  end_date?: string;   // ISO DateTime
+  is_total_suspension?: boolean;
+}
+
+export type DisciplineStatus = 'active' | 'expired' | 'upcoming';
+
+export interface ListDisciplinesFilters {
+  member_id?: string;
+  status?: DisciplineStatus;
+  sort_desc?: boolean;
+}
