@@ -80,6 +80,16 @@ export class PostgresSportRepository implements SportRepository {
         return this.mapToDTO(sport);
     }
 
+    async delete(id: string): Promise<void> {
+        await prisma.$transaction([
+            prisma.sport.update({
+                where: { id },
+                data: { members: { set: [] } },
+            }),
+            prisma.sport.delete({ where: { id } }),
+        ]);
+    }
+
     async countEnrolledMembers(id: string): Promise<number> {
         const count = await prisma.member.count({
             where: {

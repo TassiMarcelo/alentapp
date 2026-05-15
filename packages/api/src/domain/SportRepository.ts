@@ -7,4 +7,5 @@ export interface SportRepository {
   getAll(): Promise<SportDTO[]>;
   update(id: string, data: Partial<SportDTO>): Promise<SportDTO>;
   countEnrolledMembers(id: string): Promise<number>;
+  delete(id: string): Promise<void>;
 }
