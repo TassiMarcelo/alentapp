@@ -72,6 +72,13 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
     return this.mapToDTO(discipline);
   }
 
+  async softDelete(id: string): Promise<void> {
+    await prisma.discipline.update({
+      where: { id },
+      data: { deleted_at: new Date() },
+    });
+  }
+
   private mapToDTO(discipline: any): DisciplineDTO {
     return {
       id: discipline.id,
