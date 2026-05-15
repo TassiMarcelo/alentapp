@@ -37,4 +37,14 @@ export const sportsService = {
     }
     return response.json();
   },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/sports/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al eliminar el deporte');
+    }
+  },
 };

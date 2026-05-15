@@ -126,10 +126,9 @@ export function SportsView() {
   };
 
   const handleDelete = async (sport: SportDTO) => {
-    if (!window.confirm(`¿Eliminar el deporte ${sport.nombre}? Esta acción no se puede deshacer.`)) return;
+    if (!window.confirm(`¿Eliminar el deporte ${sport.nombre}? Se perderán los vínculos con los socios y la acción no se puede deshacer.`)) return;
     try {
-      // await sportsService.delete(sport.id);
-      alert('Eliminar deporte en desarrollo.');
+      await sportsService.delete(sport.id);
       void fetchSports();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar el deporte');
