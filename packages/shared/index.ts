@@ -53,6 +53,28 @@ export interface CreateLockerRequest {
   ubicacion: LockerUbicacion;
 }
 
+// ==========================================
+// Sport
+// ==========================================
+export interface SportDTO {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  cupoMaximo: number;
+  precioAdicional: number;
+  esFederado: boolean;
+  requires_medical_certificate: boolean;
+}
+
+export interface CreateSportRequest {
+  nombre: string;
+  descripcion: string;
+  cupoMaximo: number;
+  precioAdicional: number;
+  esFederado: boolean;
+  requires_medical_certificate: boolean;
+}
+
 export interface GetLockersFilters {
   estado?: LockerEstado;
   ubicacion?: LockerUbicacion;

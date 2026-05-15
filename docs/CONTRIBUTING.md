@@ -82,7 +82,7 @@ feat(locker): add locker assignment validation
 | discipline |
 | github |
 | deps |
-
+| release |
 ---
 
 ### Reglas
