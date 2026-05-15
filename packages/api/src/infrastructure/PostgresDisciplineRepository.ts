@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
 import { DisciplineRepository, FindAllDisciplinesFilters } from '../domain/DisciplineRepository.js';
-import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import { DisciplineDTO, CreateDisciplineRequest, UpdateDisciplineRequest } from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
@@ -49,6 +49,27 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
     });
 
     return disciplines.map((d) => this.mapToDTO(d));
+  }
+
+  async findById(id: string): Promise<DisciplineDTO | null> {
+    const discipline = await prisma.discipline.findFirst({
+      where: { id, deleted_at: null },
+    });
+    return discipline ? this.mapToDTO(discipline) : null;
+  }
+
+  async update(id: string, data: UpdateDisciplineRequest): Promise<DisciplineDTO> {
+    const updateData: any = {};
+    if (data.reason !== undefined) updateData.reason = data.reason;
+    if (data.start_date !== undefined) updateData.start_date = new Date(data.start_date);
+    if (data.end_date !== undefined) updateData.end_date = new Date(data.end_date);
+    if (data.is_total_suspension !== undefined) updateData.is_total_suspension = data.is_total_suspension;
+
+    const discipline = await prisma.discipline.update({
+      where: { id },
+      data: updateData,
+    });
+    return this.mapToDTO(discipline);
   }
 
   private mapToDTO(discipline: any): DisciplineDTO {

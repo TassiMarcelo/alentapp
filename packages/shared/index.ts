@@ -90,6 +90,13 @@ export interface CreateDisciplineRequest {
   member_id: string;
 }
 
+export interface UpdateDisciplineRequest {
+  reason?: string;
+  start_date?: string; // ISO DateTime
+  end_date?: string;   // ISO DateTime
+  is_total_suspension?: boolean;
+}
+
 export type DisciplineStatus = 'active' | 'expired' | 'upcoming';
 
 export interface ListDisciplinesFilters {

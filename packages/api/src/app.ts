@@ -19,6 +19,7 @@ import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplin
 import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
 import { ListDisciplinesUseCase } from './application/ListDisciplinesUseCase.js';
+import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
 import { DisciplineController } from './delivery/DisciplineController.js';
 
 export function buildApp() {
@@ -36,7 +37,7 @@ export function buildApp() {
 
     server.register(cors, {
         origin: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
     });
@@ -86,10 +87,12 @@ export function buildApp() {
     const disciplineValidator = new DisciplineValidator();
     const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
     const listDisciplinesUseCase = new ListDisciplinesUseCase(disciplineRepo);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, listDisciplinesUseCase);
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo, disciplineValidator);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, listDisciplinesUseCase, updateDisciplineUseCase);
 
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.get('/api/v1/disciplines', disciplineController.list.bind(disciplineController));
+    server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
