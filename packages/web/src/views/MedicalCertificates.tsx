@@ -6,14 +6,19 @@ import {
   Flex,
   Heading,
   HStack,
+  IconButton,
   Input,
   Stack,
   Table,
   Text,
   Spinner,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
-import type { MedicalCertificateDTO, MemberDTO } from '@alentapp/shared';
+import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
+import type {
+  MedicalCertificateDTO,
+  MemberDTO,
+  UpdateMedicalCertificateRequest,
+} from '@alentapp/shared';
 import { membersService } from '../services/members';
 import { medicalCertificatesService } from '../services/medicalcertificates';
 import {
@@ -36,7 +41,14 @@ import {
   createListCollection,
 } from '../components/ui/select';
 
-type Modal = 'none' | 'create';
+type Modal = 'none' | 'create' | 'edit';
+
+type EditForm = {
+  issue_date: string;
+  expiry_date: string;
+  doctor_license: string;
+  is_validated: boolean;
+};
 
 export function MedicalCertificatesView() {
   const [certificates, setCertificates] = useState<MedicalCertificateDTO[]>([]);
@@ -50,6 +62,15 @@ export function MedicalCertificatesView() {
     issue_date: '',
     expiry_date: '',
     doctor_license: '',
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editMemberId, setEditMemberId] = useState<string>('');
+  const [editOriginal, setEditOriginal] = useState<EditForm | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({
+    issue_date: '',
+    expiry_date: '',
+    doctor_license: '',
+    is_validated: false,
   });
 
   const memberCollection = createListCollection({
@@ -91,6 +112,59 @@ export function MedicalCertificatesView() {
       void fetchCertificates();
     } catch (err: any) {
       alert(err.message || 'Error al registrar el certificado médico');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // member_id es inmutable (TDD-0019): se muestra como solo lectura.
+  const openEdit = (c: MedicalCertificateDTO) => {
+    const initial: EditForm = {
+      issue_date: c.issue_date,
+      expiry_date: c.expiry_date,
+      doctor_license: c.doctor_license,
+      is_validated: c.is_validated,
+    };
+    setEditingId(c.id);
+    setEditMemberId(c.member_id);
+    setEditOriginal(initial);
+    setEditForm(initial);
+    setModal('edit');
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !editOriginal) return;
+
+    // Edición parcial: solo se envían los campos que cambiaron.
+    const diff: UpdateMedicalCertificateRequest = {};
+    if (editForm.issue_date !== editOriginal.issue_date) {
+      diff.issueDate = editForm.issue_date;
+    }
+    if (editForm.expiry_date !== editOriginal.expiry_date) {
+      diff.expiryDate = editForm.expiry_date;
+    }
+    if (editForm.doctor_license !== editOriginal.doctor_license) {
+      diff.doctorLicense = editForm.doctor_license;
+    }
+    if (editForm.is_validated !== editOriginal.is_validated) {
+      diff.isValidated = editForm.is_validated;
+    }
+
+    if (Object.keys(diff).length === 0) {
+      setModal('none');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await medicalCertificatesService.update(editingId, diff);
+      setModal('none');
+      setEditingId(null);
+      setEditOriginal(null);
+      void fetchCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar el certificado médico');
     } finally {
       setIsSubmitting(false);
     }
@@ -181,6 +255,72 @@ export function MedicalCertificatesView() {
         </DialogContent>
       </DialogRoot>
 
+      {/* Modal Editar */}
+      <DialogRoot open={modal === 'edit'} onOpenChange={(e) => !e.open && setModal('none')}>
+        <DialogContent>
+          <form onSubmit={handleEdit}>
+            <DialogHeader>
+              <DialogTitle>Editar Certificado Médico</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              <Stack gap="4">
+                <Field label="Socio" helperText="El socio no puede modificarse">
+                  <Input value={memberName(editMemberId)} readOnly disabled />
+                </Field>
+
+                <Field label="Fecha de Emisión" required>
+                  <Input
+                    type="date"
+                    value={editForm.issue_date}
+                    onChange={(e) => setEditForm({ ...editForm, issue_date: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="Fecha de Vencimiento" required>
+                  <Input
+                    type="date"
+                    value={editForm.expiry_date}
+                    onChange={(e) => setEditForm({ ...editForm, expiry_date: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="Matrícula del Médico" required>
+                  <Input
+                    placeholder="Ej. MP12345"
+                    value={editForm.doctor_license}
+                    onChange={(e) => setEditForm({ ...editForm, doctor_license: e.target.value })}
+                    required
+                  />
+                </Field>
+
+                <Field label="Vigencia">
+                  <HStack>
+                    <input
+                      type="checkbox"
+                      id="edit_is_validated"
+                      checked={editForm.is_validated}
+                      onChange={(e) => setEditForm({ ...editForm, is_validated: e.target.checked })}
+                    />
+                    <label htmlFor="edit_is_validated">Certificado validado (vigente)</label>
+                  </HStack>
+                </Field>
+              </Stack>
+            </DialogBody>
+            <DialogFooter>
+              <DialogActionTrigger asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogActionTrigger>
+              <Button type="submit" loading={isSubmitting}>
+                Guardar cambios
+              </Button>
+            </DialogFooter>
+            <DialogCloseTrigger />
+          </form>
+        </DialogContent>
+      </DialogRoot>
+
       {/* Header */}
       <Stack gap="8">
         <Flex justify="space-between" align="center">
@@ -224,6 +364,7 @@ export function MedicalCertificatesView() {
                 <Table.ColumnHeader py="4">Matrícula Médico</Table.ColumnHeader>
                 <Table.ColumnHeader py="4">Estado</Table.ColumnHeader>
                 <Table.ColumnHeader py="4">Validado</Table.ColumnHeader>
+                <Table.ColumnHeader py="4" textAlign="end">Acciones</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -242,6 +383,16 @@ export function MedicalCertificatesView() {
                     </Text>
                   </Table.Cell>
                   <Table.Cell>{c.is_validated ? '✓' : '✗'}</Table.Cell>
+                  <Table.Cell textAlign="end">
+                    <IconButton
+                      aria-label="Editar certificado"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openEdit(c)}
+                    >
+                      <LuPencil />
+                    </IconButton>
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>

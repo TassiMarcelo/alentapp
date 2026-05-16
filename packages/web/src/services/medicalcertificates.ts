@@ -1,4 +1,8 @@
-import type { MedicalCertificateDTO, CreateMedicalCertificateRequest } from '@alentapp/shared';
+import type {
+  MedicalCertificateDTO,
+  CreateMedicalCertificateRequest,
+  UpdateMedicalCertificateRequest,
+} from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
@@ -23,6 +27,21 @@ export const medicalCertificatesService = {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.message || err.error || 'Error al cargar los certificados médicos');
+    }
+    return response.json();
+  },
+  async update(
+    id: string,
+    data: UpdateMedicalCertificateRequest,
+  ): Promise<MedicalCertificateDTO> {
+    const response = await fetch(`${API_URL}/medical-certificates/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || err.error || 'Error al actualizar el certificado médico');
     }
     return response.json();
   },
