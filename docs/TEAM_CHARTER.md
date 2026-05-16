@@ -10,7 +10,7 @@ manera, reduzcamos fricciones y tengamos claras las expectativas desde el primer
 
 | Nombre completo   | Legajo | Rol            | Entidad asignada     | GitHub           |
 |-------------------|--------|----------------|----------------------|------------------|
-| Marcelo Tassi     | 26980  | Coordinador/a  | Member               | [@TassiMarcelo]  |
+| Marcelo Tassi     | 26980  | Coordinador/a  | Locker               | [@TassiMarcelo]  |
 | Mateo Lafalce     | 33217  | Integrante     | Discipline           | [@mateolafalce]  |
 | Alejandro Llontop | 31890  | Integrante     | Sport                | [@AleLlontop]    |
 | Matias Delozano   | 27978  | Integrante     | MedicalCertificate   | [@MatiDelozano]  |
@@ -140,4 +140,4 @@ Un entregable se considera terminado cuando:
 
 ---
 
-**Fecha de creación:** 15/05/2026 — Revisado y acordado por todos los integrantes del grupo.
+**Fecha de creación:** 16/05/2026 — Revisado y acordado por todos los integrantes del grupo.
