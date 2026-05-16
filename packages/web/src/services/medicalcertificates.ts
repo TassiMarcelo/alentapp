@@ -49,7 +49,6 @@ export const medicalCertificatesService = {
   async delete(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/medical-certificates/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
