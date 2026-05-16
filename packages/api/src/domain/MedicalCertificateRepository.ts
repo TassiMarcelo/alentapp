@@ -23,6 +23,7 @@ export interface MedicalCertificateRepository {
   findByMemberId(memberId: string): Promise<MedicalCertificateDTO[]>;
   findAll(): Promise<MedicalCertificateDTO[]>;
   findById(id: string): Promise<MedicalCertificateDTO | null>;
-  update(id: string, data: UpdateMedicalCertificateRequest): Promise<MedicalCertificateDTO>; // TDD-0019
+  // TDD-0019: edición parcial; tx opcional para invalidar previos + actualizar de forma atómica
+  update(id: string, data: UpdateMedicalCertificateRequest, tx?: TxClient): Promise<MedicalCertificateDTO>;
   delete(id: string): Promise<void>; // TDD-0020
 }
