@@ -146,6 +146,7 @@ export interface MedicalCertificateDTO {
   doctor_license: string;
   is_validated: boolean;
   created_at: string;    // ISO DateTime
+  deleted_at?: string | null; // ISO DateTime — null si vigente (TDD-0020 §Modelo de Datos)
 }
 
 // Contrato de API (TDD-0018 §Contrato de API) — camelCase

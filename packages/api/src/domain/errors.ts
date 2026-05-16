@@ -13,3 +13,12 @@ export class NotFoundError extends Error {
     this.name = 'NotFoundError';
   }
 }
+
+// El recurso existe pero ya fue eliminado (borrado lógico) -> 410 Gone
+// (TDD-0020 §Casos de Borde y Errores)
+export class GoneError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GoneError';
+  }
+}
