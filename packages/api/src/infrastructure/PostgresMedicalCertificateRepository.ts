@@ -62,14 +62,18 @@ export class PostgresMedicalCertificateRepository implements MedicalCertificateR
         return certs.map(cert => this.mapToDTO(cert));
     }
 
-    async update(id: string, data: UpdateMedicalCertificateRequest): Promise<MedicalCertificateDTO> {
-        const cert = await prisma.medicalCertificate.update({
+    async update(
+        id: string,
+        data: UpdateMedicalCertificateRequest,
+        tx?: TxClient,
+    ): Promise<MedicalCertificateDTO> {
+        const cert = await db(tx).medicalCertificate.update({
             where: { id },
             data: {
-                ...(data.issue_date && { issue_date: new Date(data.issue_date) }),
-                ...(data.expiry_date && { expiry_date: new Date(data.expiry_date) }),
-                ...(data.doctor_license && { doctor_license: data.doctor_license }),
-                ...(data.is_validated !== undefined && { is_validated: data.is_validated }),
+                ...(data.issueDate && { issue_date: new Date(data.issueDate) }),
+                ...(data.expiryDate && { expiry_date: new Date(data.expiryDate) }),
+                ...(data.doctorLicense && { doctor_license: data.doctorLicense }),
+                ...(data.isValidated !== undefined && { is_validated: data.isValidated }),
             },
         });
         return this.mapToDTO(cert);
