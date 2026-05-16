@@ -131,3 +131,34 @@ export interface ListDisciplinesFilters {
   status?: DisciplineStatus;
   sort_desc?: boolean;
 }
+
+
+// ==========================================
+// MedicalCertificate
+// ==========================================
+
+// Entidad de dominio (TDD-0018 §Modelo de Dominio) — snake_case
+export interface MedicalCertificateDTO {
+  id: string;            // UUID
+  member_id: string;
+  issue_date: string;    // ISO Date String (YYYY-MM-DD)
+  expiry_date: string;   // ISO Date String (YYYY-MM-DD)
+  doctor_license: string;
+  is_validated: boolean;
+  created_at: string;    // ISO DateTime
+}
+
+// Contrato de API (TDD-0018 §Contrato de API) — camelCase
+export interface CreateMedicalCertificateRequest {
+  issueDate: string;     // "YYYY-MM-DD"
+  expiryDate: string;    // "YYYY-MM-DD"
+  doctorLicense: string;
+  memberId: string;
+}
+
+export interface UpdateMedicalCertificateRequest {
+  issue_date?: string;
+  expiry_date?: string;
+  doctor_license?: string;
+  is_validated?: boolean;
+}
