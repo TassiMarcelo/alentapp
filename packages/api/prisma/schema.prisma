@@ -36,6 +36,7 @@ model Member {
     sports     Sport[]        @relation("MemberSports")
     lockers     Locker[]
     disciplines Discipline[]
+    medicalCertificates MedicalCertificate[]
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
 }
 
@@ -92,4 +93,19 @@ model Discipline {
     deleted_at          DateTime?
 
     @@map("disciplines")
+}
+
+model MedicalCertificate {
+    id             String    @id @default(uuid())
+    issue_date     DateTime
+    expiry_date    DateTime
+    doctor_license String
+    is_validated   Boolean   @default(true)
+    created_at     DateTime  @default(now())
+    updated_at     DateTime  @updatedAt
+    deleted_at     DateTime?
+    member_id      String
+    member         Member    @relation(fields: [member_id], references: [id])
+
+    @@map("medical_certificates")
 }
