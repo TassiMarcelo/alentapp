@@ -102,6 +102,7 @@ export class PostgresMedicalCertificateRepository implements MedicalCertificateR
             doctor_license: cert.doctor_license,
             is_validated: cert.is_validated,
             created_at: cert.created_at.toISOString(),
+            deleted_at: cert.deleted_at ? cert.deleted_at.toISOString() : null,
         };
     }
 }
