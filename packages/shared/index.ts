@@ -156,9 +156,10 @@ export interface CreateMedicalCertificateRequest {
   memberId: string;
 }
 
+// Contrato de API (TDD-0019 §Contrato de API) — camelCase, edición parcial
 export interface UpdateMedicalCertificateRequest {
-  issue_date?: string;
-  expiry_date?: string;
-  doctor_license?: string;
-  is_validated?: boolean;
+  issueDate?: string;     // "YYYY-MM-DD"
+  expiryDate?: string;    // "YYYY-MM-DD"
+  doctorLicense?: string;
+  isValidated?: boolean;
 }
