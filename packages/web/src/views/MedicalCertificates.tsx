@@ -13,7 +13,7 @@ import {
   Text,
   Spinner,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from 'react-icons/lu';
 import type {
   MedicalCertificateDTO,
   MemberDTO,
@@ -41,7 +41,7 @@ import {
   createListCollection,
 } from '../components/ui/select';
 
-type Modal = 'none' | 'create' | 'edit';
+type Modal = 'none' | 'create' | 'edit' | 'delete';
 
 type EditForm = {
   issue_date: string;
@@ -63,6 +63,7 @@ export function MedicalCertificatesView() {
     expiry_date: '',
     doctor_license: '',
   });
+  const [deletingCert, setDeletingCert] = useState<MedicalCertificateDTO | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemberId, setEditMemberId] = useState<string>('');
   const [editOriginal, setEditOriginal] = useState<EditForm | null>(null);
@@ -170,6 +171,27 @@ export function MedicalCertificatesView() {
     }
   };
 
+  // TDD-0020: el borrado lógico exige confirmación explícita previa.
+  const openDelete = (c: MedicalCertificateDTO) => {
+    setDeletingCert(c);
+    setModal('delete');
+  };
+
+  const handleDelete = async () => {
+    if (!deletingCert) return;
+    setIsSubmitting(true);
+    try {
+      await medicalCertificatesService.delete(deletingCert.id);
+      setModal('none');
+      setDeletingCert(null);
+      void fetchCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar el certificado médico');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     void fetchMembers();
     void fetchCertificates();
@@ -208,7 +230,9 @@ export function MedicalCertificatesView() {
                     </SelectTrigger>
                     <SelectContent>
                       {memberCollection.items.map((item) => (
-                        <SelectItem key={item.value} item={item} />
+                        <SelectItem key={item.value} item={item}>
+                          {item.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </SelectRoot>
@@ -321,6 +345,41 @@ export function MedicalCertificatesView() {
         </DialogContent>
       </DialogRoot>
 
+      {/* Modal Eliminar (TDD-0020 §Criterios de Aceptación) */}
+      <DialogRoot
+        role="alertdialog"
+        open={modal === 'delete'}
+        onOpenChange={(e) => {
+          if (!e.open) {
+            setModal('none');
+            setDeletingCert(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader><DialogTitle>Eliminar Certificado Médico</DialogTitle></DialogHeader>
+          <DialogBody>
+            <Text>¿Está seguro que desea eliminar este certificado?</Text>
+            {deletingCert && (
+              <Text mt="2" color="fg.muted" fontSize="sm">
+                Socio: {memberName(deletingCert.member_id)} · Vence el{' '}
+                {formatDate(deletingCert.expiry_date)}. Si era el único certificado
+                vigente, el socio quedará como "No Apto".
+              </Text>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <DialogActionTrigger asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogActionTrigger>
+            <Button colorPalette="red" loading={isSubmitting} onClick={handleDelete}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+          <DialogCloseTrigger />
+        </DialogContent>
+      </DialogRoot>
+
       {/* Header */}
       <Stack gap="8">
         <Flex justify="space-between" align="center">
@@ -391,6 +450,15 @@ export function MedicalCertificatesView() {
                       onClick={() => openEdit(c)}
                     >
                       <LuPencil />
+                    </IconButton>
+                    <IconButton
+                      aria-label="Eliminar certificado"
+                      size="sm"
+                      variant="ghost"
+                      colorPalette="red"
+                      onClick={() => openDelete(c)}
+                    >
+                      <LuTrash2 />
                     </IconButton>
                   </Table.Cell>
                 </Table.Row>

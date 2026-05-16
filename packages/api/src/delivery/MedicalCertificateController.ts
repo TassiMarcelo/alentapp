@@ -2,23 +2,28 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { CreateMedicalCertificateUseCase } from '../application/CreateMedicalCertificateUseCase.js';
 import { GetMedicalCertificatesUseCase } from '../application/GetMedicalCertificatesUseCase.js';
 import { UpdateMedicalCertificateUseCase } from '../application/UpdateMedicalCertificateUseCase.js';
+import { DeleteMedicalCertificateUseCase } from '../application/DeleteMedicalCertificateUseCase.js';
 import { CreateMedicalCertificateRequest, UpdateMedicalCertificateRequest } from '@alentapp/shared';
-import { ValidationError, NotFoundError } from '../domain/errors.js';
+import { ValidationError, NotFoundError, GoneError } from '../domain/errors.js';
 
 export class MedicalCertificateController {
     constructor(
         private createUseCase: CreateMedicalCertificateUseCase,
         private getUseCase: GetMedicalCertificatesUseCase,
         private updateUseCase: UpdateMedicalCertificateUseCase,
+        private deleteUseCase: DeleteMedicalCertificateUseCase,
     ) {}
 
-    // Mapea excepciones a códigos HTTP (TDD-0018 §Casos de Borde)
+    // Mapea excepciones a códigos HTTP (TDD-0018 §Casos de Borde, TDD-0020 §Casos de Borde)
     private handleError(error: any, reply: FastifyReply) {
         if (error instanceof ValidationError) {
             return reply.status(400).send({ message: error.message });
         }
         if (error instanceof NotFoundError) {
             return reply.status(404).send({ message: error.message });
+        }
+        if (error instanceof GoneError) {
+            return reply.status(410).send({ message: error.message });
         }
         return reply.status(500).send({ message: 'Error interno, reintente más tarde' });
     }
@@ -55,6 +60,20 @@ export class MedicalCertificateController {
                 body as UpdateMedicalCertificateRequest,
             );
             return reply.status(200).send(result);
+        } catch (error: any) {
+            return this.handleError(error, reply);
+        }
+    }
+
+    // TDD-0020: DELETE /api/v1/medical-certificates/:id — borrado lógico
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteUseCase.execute(id);
+            return reply.status(204).send();
         } catch (error: any) {
             return this.handleError(error, reply);
         }

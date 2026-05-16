@@ -45,4 +45,14 @@ export const medicalCertificatesService = {
     }
     return response.json();
   },
+  // TDD-0020: borrado lógico. La API responde 204 No Content (sin cuerpo).
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/medical-certificates/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || err.error || 'Error al eliminar el certificado médico');
+    }
+  },
 };
