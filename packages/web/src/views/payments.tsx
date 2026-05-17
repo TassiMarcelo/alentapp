@@ -14,7 +14,9 @@ import {
 import { LuPlus, LuRefreshCw, LuPencil } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { paymentsService } from "../services/payments";
+import { membersService } from "../services/members";
 import type { PaymentDTO } from "../types/payment";
+import type { MemberDTO } from "@alentapp/shared";
 
 import {
   DialogRoot,
@@ -28,9 +30,18 @@ import {
 } from "../components/ui/dialog";
 
 import { Field } from "../components/ui/field";
+import {
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+  SelectContent,
+  SelectItem,
+  createListCollection
+} from "../components/ui/select";
 
 export function PaymentsView() {
   const [payments, setPayments] = useState<PaymentDTO[]>([]);
+  const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +63,20 @@ export function PaymentsView() {
     fechaVencimiento: "",
   });
 
+  const memberCollection = createListCollection({
+    items: members.map((m) => ({ label: `${m.name} (DNI: ${m.dni})`, value: m.id })),
+  });
+
+  const memberName = (id: string) =>
+    members.find((m) => m.id === id)?.name ?? id;
+
+  const fetchMembers = async () => {
+    try {
+      const data = await membersService.getAll();
+      setMembers(data);
+    } catch { /* silencioso */ }
+  };
+
   const fetchPayments = async () => {
     setIsLoading(true);
     setError(null);
@@ -66,6 +91,7 @@ export function PaymentsView() {
   };
 
   useEffect(() => {
+    fetchMembers();
     fetchPayments();
   }, []);
 
@@ -163,13 +189,25 @@ export function PaymentsView() {
 
             <DialogBody>
               <Stack gap="4">
-                <Field label="Member ID" required>
-                  <Input
-                    value={formData.memberId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, memberId: e.target.value })
+                <Field label="Socio" required>
+                  <SelectRoot
+                    collection={memberCollection}
+                    value={formData.memberId ? [formData.memberId] : []}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, memberId: val.value[0] ?? "" })
                     }
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValueText placeholder="Seleccionar socio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {memberCollection.items.map((item) => (
+                        <SelectItem key={item.value} item={item}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </SelectRoot>
                 </Field>
 
                 <Field label="Monto" required>
@@ -305,7 +343,7 @@ export function PaymentsView() {
                 {payments.map((p) => (
                   <Table.Row key={p.id}>
                     <Table.Cell>{p.id}</Table.Cell>
-                    <Table.Cell>{p.memberId}</Table.Cell>
+                    <Table.Cell>{memberName(p.memberId)}</Table.Cell>
                     <Table.Cell>${p.monto}</Table.Cell>
                     <Table.Cell>{p.mesReferencia}</Table.Cell>
                     <Table.Cell>{p.anioReferencia}</Table.Cell>
