@@ -1,8 +1,8 @@
 ---
 id: 0016
-estado: Propuesto
+estado: Aprobado
 autor: Abel Di Bella
-fecha: 2026-05-02
+fecha: 2026-05-13
 titulo: Cancelación de Pagos
 ---
 
@@ -12,12 +12,13 @@ titulo: Cancelación de Pagos
 
 ### Objetivo
 
-Permitir anular un pago sin eliminarlo del sistema, garantizando la trazabilidad de la información y cumpliendo con reglas de auditoría financiera.
+Permitir anular un pago sin eliminarlo del sistema, garantizando la trazabilidad de la información y cumpliendo con las reglas de negocio financieras.
 
 ### User Persona
 
 * **Nombre**: Alberto (Tesorero)
 * **Descripción**: Responsable de la gestión financiera del club. Necesita anular pagos registrados por error sin perder el historial, asegurando que la información siga siendo consistente y auditable.
+
 
 ### Criterios de Aceptación
 
@@ -26,7 +27,7 @@ Permitir anular un pago sin eliminarlo del sistema, garantizando la trazabilidad
 * No se puede cancelar un pago que ya esté cancelado
 * No se puede cancelar un pago en estado **Pagado**
 * El pago debe existir
-* El socio asociado debe existir
+* El socio debe existir
 
 ---
 
@@ -44,7 +45,7 @@ export interface Payment {
   fechaVencimiento: Date;
   estado: 'Pendiente' | 'Pagado' | 'Cancelado';
   fechaPago?: Date;
-  created_at: string;
+  created_at: Date;
 }
 ```
 
@@ -140,7 +141,7 @@ export interface PaymentRepository {
    * Validar ID de entrada
    * Buscar el pago por ID
    * Verificar que el pago exista
-   * Verificar que el socio asociado exista
+   * Verificar que el socio exista
    * Validar que el estado no sea `Pagado`
    * Validar que el estado no sea `Cancelado`
    * Cambiar el estado a `Cancelado`
@@ -163,7 +164,7 @@ export interface PaymentRepository {
 
 ## 6. Observaciones
 
-* No se permite la eliminación física de pagos (principio de trazabilidad)
-* La cancelación es una operación lógica mediante cambio de estado
-* El estado **Vencido** no se persiste, se calcula dinámicamente según la fecha de vencimiento
-* Se mantiene coherencia con reglas de negocio financieras reales
+* No se permite la eliminación física de pagos (principio de trazabilidad).
+* La cancelación es una operación lógica mediante cambio de estado.
+* Se mantiene coherencia con reglas de negocio.
+* El atributo memberId es una foreign key.

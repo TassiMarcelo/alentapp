@@ -1,8 +1,8 @@
 ---
 id: 0017
-estado: Propuesto
+estado: Aprobado
 autor: Abel Di Bella
-fecha: 2026-05-02
+fecha: 2026-05-13
 titulo: Registro de Pago (Marcar como Pagado)
 ---
 
@@ -19,6 +19,7 @@ Permitir registrar el pago de una cuota pendiente, actualizando su estado y alma
 * **Nombre**: Alberto (Tesorero)
 * **Descripción**: Responsable de registrar los pagos realizados por los socios. Necesita actualizar el estado de las cuotas de manera precisa para reflejar correctamente la situación financiera.
 
+
 ### Criterios de Aceptación
 
 * Solo se pueden registrar pagos sobre cuotas en estado **Pendiente**
@@ -27,7 +28,7 @@ Permitir registrar el pago de una cuota pendiente, actualizando su estado y alma
 * No se puede pagar una cuota ya pagada
 * No se puede pagar una cuota cancelada
 * El pago debe existir
-* El socio asociado debe existir
+* El socio debe existir
 
 ---
 
@@ -45,7 +46,7 @@ export interface Payment {
   fechaVencimiento: Date;
   estado: 'Pendiente' | 'Pagado' | 'Cancelado';
   fechaPago?: Date;
-  created_at: string;
+  created_at: Date;
 }
 ```
 
@@ -113,7 +114,7 @@ export interface PaymentRepository {
 1. Validar ID de entrada
 2. Buscar el pago por ID
 3. Si no existe, retornar error
-4. Verificar que el socio asociado exista
+4. Verificar que el socio exista
 5. Validar que el estado sea **Pendiente**
 6. Validar que no esté en estado **Pagado**
 7. Validar que no esté en estado **Cancelado**
@@ -150,7 +151,7 @@ export interface PaymentRepository {
    * Validar datos de entrada (`fechaPago`)
    * Buscar el pago por ID
    * Verificar que el pago exista
-   * Verificar que el socio asociado exista
+   * Verificar que el socio exista
    * Validar que el estado sea `Pendiente`
    * Validar que no esté en estado `Pagado`
    * Validar que no esté en estado `Cancelado`
@@ -177,7 +178,10 @@ export interface PaymentRepository {
 
 ## 6. Observaciones
 
-* El pago es una operación irreversible desde el punto de vista del estado
-* Se registra la fecha efectiva del pago para auditoría
-* El estado **Vencido** no se persiste, se calcula dinámicamente según la fecha de vencimiento
-* Se mantiene coherencia con reglas de negocio financieras reales
+* El pago es una operación irreversible desde el punto de vista del estado.
+* Se registra la fecha efectiva del pago para auditoría.
+* Se considera el estado **Vencido**, si al momento de realizar el pago la fecha actual es posterior que la fecha de vencimiento. Dicho estado no se persiste.
+* El atributo memberId es una foreign key.
+
+
+
