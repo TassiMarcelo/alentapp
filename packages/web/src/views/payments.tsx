@@ -11,7 +11,7 @@ import {
   Center,
   Input
 } from "@chakra-ui/react";
-import { LuPlus, LuRefreshCw } from "react-icons/lu";
+import { LuPlus, LuRefreshCw, LuPencil } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { paymentsService } from "../services/payments";
 import type { PaymentDTO } from "../types/payment";
@@ -36,6 +36,12 @@ export function PaymentsView() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // edición de monto (TDD-0015: solo pagos en estado Pendiente)
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<PaymentDTO | null>(null);
+  const [editMonto, setEditMonto] = useState(0);
 
   // form
   const [formData, setFormData] = useState({
@@ -75,6 +81,34 @@ export function PaymentsView() {
       alert(err.message || "Error al crear pago");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (payment: PaymentDTO) => {
+    setEditingPayment(payment);
+    setEditMonto(payment.monto);
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPayment) return;
+
+    if (editMonto <= 0) {
+      alert("El monto debe ser mayor a 0");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await paymentsService.update(editingPayment.id, { monto: editMonto });
+      setIsEditOpen(false);
+      setEditingPayment(null);
+      fetchPayments();
+    } catch (err: any) {
+      alert(err.message || "Error al actualizar pago");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -194,6 +228,52 @@ export function PaymentsView() {
           </form>
         </DialogContent>
 
+        {/* MODAL EDITAR MONTO */}
+        <DialogRoot
+          open={isEditOpen}
+          onOpenChange={(e) => {
+            setIsEditOpen(e.open);
+            if (!e.open) setEditingPayment(null);
+          }}
+        >
+          <DialogContent>
+            <form onSubmit={handleUpdateSubmit}>
+              <DialogHeader>
+                <DialogTitle>Editar Monto</DialogTitle>
+              </DialogHeader>
+
+              <DialogBody>
+                <Stack gap="4">
+                  <Text color="fg.muted">
+                    Solo se puede modificar el monto de pagos en estado{" "}
+                    <strong>Pendiente</strong>.
+                  </Text>
+
+                  <Field label="Monto" required>
+                    <Input
+                      type="number"
+                      value={editMonto}
+                      onChange={(e) => setEditMonto(Number(e.target.value))}
+                    />
+                  </Field>
+                </Stack>
+              </DialogBody>
+
+              <DialogFooter>
+                <DialogActionTrigger asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </DialogActionTrigger>
+
+                <Button type="submit" colorPalette="blue" loading={isUpdating}>
+                  Guardar
+                </Button>
+              </DialogFooter>
+
+              <DialogCloseTrigger />
+            </form>
+          </DialogContent>
+        </DialogRoot>
+
         {/* ERROR */}
         {error && (
           <Box bg="red.50" p="4" borderRadius="md">
@@ -257,6 +337,14 @@ export function PaymentsView() {
                     <Table.Cell textAlign="end">
                       {p.estado === "Pendiente" && (
                         <HStack justify="flex-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            aria-label="Editar monto"
+                            onClick={() => handleEdit(p)}
+                          >
+                            <LuPencil />
+                          </Button>
                           <Button size="sm" onClick={() => handlePay(p.id)}>
                             Pagar
                           </Button>
