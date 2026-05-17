@@ -1,8 +1,8 @@
 ---
 id: 0014
-estado: Propuesto
+estado: Aprobado
 autor: Abel Di Bella
-fecha: 2026-05-02
+fecha: 2026-05-13
 titulo: Registro de Nuevos Pagos
 ---
 
@@ -16,7 +16,9 @@ Registrar una nueva obligación de pago para un socio, garantizando integridad y
 
 ### User Persona
 
-* **Alberto (Tesorero):** necesita registrar cuotas sin errores.
+* **Nombre**: Alberto (Tesorero)
+* **Descripción**: Responsable de registrar los pagos realizados por los socios. Necesita registrar cuotas sin errores.
+
 
 ### Criterios de Aceptación
 
@@ -34,14 +36,14 @@ Registrar una nueva obligación de pago para un socio, garantizando integridad y
 ```ts
 export interface Payment {
   id: string;
-  memberId: string;
+  memberId: string;  
   monto: number;
   mesReferencia: number;
   anioReferencia: number;
   fechaVencimiento: Date;
   estado: 'Pendiente' | 'Pagado' | 'Cancelado';
   fechaPago?: Date;
-  created_at: string;
+  created_at: Date;
 }
 ```
 
@@ -113,7 +115,7 @@ export interface PaymentRepository {
 2. Verificar que el socio exista
 3. Verificar duplicados
 4. Validar monto > 0
-5. Crear con estado PENDING
+5. Crear con estado Pendiente
 6. Persistir
 
 ---
@@ -162,5 +164,6 @@ export interface PaymentRepository {
 
 ## 6. Observaciones
 
-* Se garantiza idempotencia mediante restricción única
-* El estado **Vencido** se calcula dinámicamente
+* Se garantiza idempotencia mediante restricción única.
+* El pago se crea con estado **Pendiente**.
+* El atributo memberId es una foreign key.

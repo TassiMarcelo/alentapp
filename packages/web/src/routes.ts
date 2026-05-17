@@ -7,6 +7,7 @@ import { LockersView } from "./views/Lockers";
 import { SportsView } from "./views/Sports";
 import { DisciplinesView } from "./views/Disciplines";
 import { MedicalCertificatesView } from "./views/MedicalCertificates";
+import { PaymentsView } from "./views/payments";
 
 export let router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ export let router = createBrowserRouter([
       {
         path: "/medical-certificates",
         Component: MedicalCertificatesView,
+      },
+      {
+        path: "/payments",
+        Component: PaymentsView,
       }
     ],
   },

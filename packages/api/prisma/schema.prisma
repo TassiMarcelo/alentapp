@@ -37,6 +37,7 @@ model Member {
     lockers     Locker[]
     disciplines Discipline[]
     medicalCertificates MedicalCertificate[]
+    payments Payment[]
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
 }
 
@@ -108,4 +109,33 @@ model MedicalCertificate {
     member         Member    @relation(fields: [member_id], references: [id])
 
     @@map("medical_certificates")
+}
+
+// Esquema para Payments
+
+enum PaymentStatus {
+    Pendiente
+    Pagado
+    Cancelado
+}
+
+model Payment {
+    id                String         @id @default(uuid())
+    memberId          String
+    monto             Float
+    mesReferencia     Int
+    anioReferencia    Int
+    fechaVencimiento  DateTime      @db.Date
+    estado            PaymentStatus @default(Pendiente)
+    fechaPago         DateTime?     @db.Date
+    created_at        DateTime      @default(now())
+
+    //RELACIÓN
+    member            Member        @relation(fields: [memberId], references: [id])
+
+    //EVITA DUPLICADOS
+    @@unique([memberId, mesReferencia, anioReferencia])
+
+    //Nombre de tabla en DB
+    @@map("payments")
 }
