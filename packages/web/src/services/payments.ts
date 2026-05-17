@@ -2,6 +2,7 @@ import type {
   CreatePaymentRequest,
   PaymentDTO,
   PayPaymentRequest,
+  UpdatePaymentRequest,
 } from '../types/payment';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1/payments';
@@ -24,6 +25,22 @@ export const paymentsService = {
 
     if (!res.ok) {
       throw new Error(json.error || 'Error creando pago');
+    }
+
+    return json.data;
+  },
+
+  async update(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO> {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      throw new Error(json.error || 'Error actualizando pago');
     }
 
     return json.data;
