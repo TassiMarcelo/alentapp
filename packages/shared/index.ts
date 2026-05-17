@@ -164,3 +164,38 @@ export interface UpdateMedicalCertificateRequest {
   doctorLicense?: string;
   isValidated?: boolean;
 }
+
+// ==========================================
+// Payment
+// ==========================================
+
+export type PaymentStatus = 'Pendiente' | 'Pagado' | 'Cancelado';
+
+export interface PaymentDTO {
+  id: string; // UUID
+  memberId: string;
+  monto: number;
+  mesReferencia: number; // 1 - 12
+  anioReferencia: number; // YYYY
+  fechaVencimiento: string; // ISO Date String
+  estado: PaymentStatus;
+  fechaPago?: string; // ISO Date String (opcional)
+  created_at: string; // ISO Date String
+}
+
+export interface CreatePaymentRequest {
+  memberId: string;
+  monto: number;
+  mesReferencia: number;
+  anioReferencia: number;
+  fechaVencimiento: string; // ISO Date String
+}
+
+export interface UpdatePaymentRequest {
+  monto?: number;
+  fechaVencimiento?: string; // ISO Date String
+}
+
+export interface PayPaymentRequest {
+  fechaPago: string; // ISO Date String
+}
