@@ -1,8 +1,8 @@
 ---
 id: 0015
-estado: Propuesto
+estado: Aprobado
 autor: Abel Di Bella
-fecha: 2026-05-02
+fecha: 2026-05-13
 titulo: Actualización de Pagos
 ---
 
@@ -42,7 +42,7 @@ export interface Payment {
   fechaVencimiento: Date;
   estado: 'Pendiente' | 'Pagado' | 'Cancelado';
   fechaPago?: Date;
-  created_at: string;
+  created_at: Date;
 }
 ```
 
@@ -149,5 +149,6 @@ model Payment {
 
 ## 6. Observaciones
 
-* No se modifican pagos cerrados
-* Estado vencido es calculado dinámicamente
+* No se modifican pagos cerrados.
+* El atributo memberId es una foreign key.
+
