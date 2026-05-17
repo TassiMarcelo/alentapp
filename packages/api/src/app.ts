@@ -152,7 +152,7 @@ export function buildApp() {
     const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo);
     const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo, memberRepo);
     const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo, memberRepo);
-    const payPaymentUseCase = new PayPaymentUseCase(paymentRepo);
+    const payPaymentUseCase = new PayPaymentUseCase(paymentRepo, memberRepo);
 
     const paymentController = new PaymentController(
         newPaymentUseCase,
