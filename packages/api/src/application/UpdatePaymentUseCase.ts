@@ -1,9 +1,11 @@
 import { PaymentRepository } from '../domain/PaymentRepository.js';
+import { MemberRepository } from '../domain/MemberRepository.js';
 import { PaymentDTO, UpdatePaymentRequest } from '@alentapp/shared';
 
 export class UpdatePaymentUseCase {
     constructor(
-        private readonly paymentRepo: PaymentRepository
+        private readonly paymentRepo: PaymentRepository,
+        private readonly memberRepo: MemberRepository
     ) {}
 
     async execute(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO> {
@@ -19,6 +21,12 @@ export class UpdatePaymentUseCase {
 
             // 2. Validar existencia del socio asociado
             if (!existingPayment.memberId) {
+                throw new Error('404: El socio no existe');
+            }
+
+            const member = await this.memberRepo.findById(existingPayment.memberId);
+
+            if (!member) {
                 throw new Error('404: El socio no existe');
             }
 
