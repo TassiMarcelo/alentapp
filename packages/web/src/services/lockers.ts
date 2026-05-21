@@ -1,4 +1,4 @@
-import type { LockerDTO, CreateLockerRequest, GetLockersFilters, UpdateLockerEstadoRequest, UpdateLockerRequest } from '@alentapp/shared';
+import type { LockerDTO, CreateLockerRequest, GetLockersFilters, UpdateLockerEstadoRequest, UpdateLockerRequest, Paginated } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
@@ -17,10 +17,12 @@ export const lockersService = {
     return response.json();
   },
 
-  async getAll(filters?: GetLockersFilters): Promise<LockerDTO[]> {
+  async getAll(filters?: GetLockersFilters): Promise<Paginated<LockerDTO>> {
     const params = new URLSearchParams();
     if (filters?.estado) params.set('estado', filters.estado);
     if (filters?.ubicacion) params.set('ubicacion', filters.ubicacion);
+    if (filters?.page) params.set('page', String(filters.page));
+    if (filters?.page_size) params.set('page_size', String(filters.page_size));
 
     const url = `${API_URL}/lockers${params.toString() ? '?' + params.toString() : ''}`;
     const response = await fetch(url);

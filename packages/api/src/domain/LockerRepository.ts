@@ -7,7 +7,7 @@ export interface LockerRepository {
   findByNumero(numero: number): Promise<LockerDTO | null>;
   count(): Promise<number>;
   create(data: CreateLockerRequest): Promise<LockerDTO>;
-  findAll(filters?: GetLockersFilters): Promise<LockerDTO[]>;
+  findAll(filters?: GetLockersFilters): Promise<{ data: LockerDTO[]; total: number }>;
   updateEstado(id: string, data: UpdateLockerEstadoRequest): Promise<LockerDTO>;
   findById(id: string): Promise<LockerDTO | null>;
   update(id: string, data: UpdateLockerRequest): Promise<LockerDTO>;

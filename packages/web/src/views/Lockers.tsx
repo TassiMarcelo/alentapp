@@ -12,6 +12,7 @@ import {
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
 } from '../components/ui/dialog';
 import { Field } from '../components/ui/field';
+import { PaginationControls } from '../components/ui/pagination-controls';
 import {
   SelectRoot, SelectTrigger, SelectValueText,
   SelectContent, SelectItem, createListCollection,
@@ -57,6 +58,8 @@ type Modal = 'none' | 'create' | 'assign' | 'edit';
 
 export function LockersView() {
   const [lockers, setLockers] = useState<LockerDTO[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, page_size: 20, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,11 +80,14 @@ export function LockersView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await lockersService.getAll({
+      const result = await lockersService.getAll({
         ...(filtroEstado ? { estado: filtroEstado as LockerEstado } : {}),
         ...(filtroUbicacion ? { ubicacion: filtroUbicacion as LockerUbicacion } : {}),
+        page,
+        page_size: 20,
       });
-      setLockers(data);
+      setLockers(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || 'Error al cargar los lockers');
     } finally {
@@ -91,8 +97,8 @@ export function LockersView() {
 
   const fetchMembers = async () => {
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page_size: 100 });
+      setMembers(result.data);
     } catch { /* silencioso */ }
   };
 
@@ -178,7 +184,8 @@ export function LockersView() {
     }
 };
 
-  useEffect(() => { void fetchLockers(); }, [filtroEstado, filtroUbicacion]);
+  useEffect(() => { setPage(1); }, [filtroEstado, filtroUbicacion]);
+  useEffect(() => { void fetchLockers(); }, [filtroEstado, filtroUbicacion, page]);
   useEffect(() => { void fetchMembers(); }, []);
 
   return (
@@ -398,6 +405,9 @@ export function LockersView() {
                 ))}
               </Table.Body>
             </Table.Root>
+          )}
+          {!isLoading && lockers.length > 0 && (
+            <PaginationControls pagination={pagination} onPageChange={setPage} />
           )}
         </Box>
       </Stack>

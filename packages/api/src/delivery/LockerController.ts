@@ -8,6 +8,7 @@ import { UpdateLockerEstadoRequest } from '@alentapp/shared';
 import { UpdateLockerUseCase } from '../application/UpdateLockerUseCase.js';
 import { UpdateLockerRequest } from '@alentapp/shared';
 import { DeleteLockerUseCase } from '../application/DeleteLockerUseCase.js';
+import { paginationQuerySchema } from './shared/paginationSchema.js';
 
 export class LockerController {
     constructor(
@@ -45,10 +46,20 @@ export class LockerController {
         request: FastifyRequest<{ Querystring: GetLockersFilters }>,
         reply: FastifyReply,
     ) {
+        const parsedPag = paginationQuerySchema.safeParse(request.query);
+        if (!parsedPag.success) {
+            const message = parsedPag.error.issues[0]?.message ?? 'Parámetro de paginación inválido';
+            return reply.status(400).send({ error: message });
+        }
         try {
             const { estado, ubicacion } = request.query;
-            const lockers = await this.getLockersUseCase.execute({ estado, ubicacion });
-            return reply.status(200).send(lockers);
+            const result = await this.getLockersUseCase.execute({
+                estado,
+                ubicacion,
+                page: parsedPag.data.page,
+                page_size: parsedPag.data.page_size,
+            });
+            return reply.status(200).send(result);
         } catch (error: any) {
             if (error.message === 'Filtro inválido') {
                 return reply.status(400).send({ error: error.message });

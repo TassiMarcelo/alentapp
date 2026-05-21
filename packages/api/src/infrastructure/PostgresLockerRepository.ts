@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
 import { LockerRepository } from '../domain/LockerRepository.js';
 import { LockerDTO, CreateLockerRequest, GetLockersFilters, UpdateLockerEstadoRequest, UpdateLockerRequest } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -41,18 +42,24 @@ export class PostgresLockerRepository implements LockerRepository {
         return this.mapToDTO(locker);
     }
 
-    async findAll(filters?: GetLockersFilters): Promise<LockerDTO[]> {
+    async findAll(filters?: GetLockersFilters): Promise<{ data: LockerDTO[]; total: number }> {
         const where: any = {};
         if (filters?.estado) where.estado = filters.estado;
         if (filters?.ubicacion) where.ubicacion = filters.ubicacion;
 
-        const lockers = await prisma.locker.findMany({
-            where,
-            orderBy: { numero: 'asc' },
-            include: memberInclude,
-        });
+        const { skip, take } = applyPagination(filters);
+        const [lockers, total] = await prisma.$transaction([
+            prisma.locker.findMany({
+                where,
+                orderBy: [{ numero: 'asc' }, { id: 'asc' }],
+                include: memberInclude,
+                skip,
+                take,
+            }),
+            prisma.locker.count({ where }),
+        ]);
 
-        return lockers.map((l) => this.mapToDTO(l));
+        return { data: lockers.map((l) => this.mapToDTO(l)), total };
     }
 
     async count(): Promise<number> {
