@@ -1,15 +1,18 @@
-import type { MemberDTO, CreateMemberRequest } from '@alentapp/shared';
+import type { MemberDTO, CreateMemberRequest, Paginated, PaginationParams } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
 export const membersService = {
-  async getAll(): Promise<MemberDTO[]> {
-    const response = await fetch(`${API_URL}/socios`);
+  async getAll(params?: PaginationParams): Promise<Paginated<MemberDTO>> {
+    const search = new URLSearchParams();
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.page_size) search.set('page_size', String(params.page_size));
+    const qs = search.toString();
+    const response = await fetch(`${API_URL}/socios${qs ? `?${qs}` : ''}`);
     if (!response.ok) {
       throw new Error('Error al obtener los miembros');
     }
-    const result = await response.json();
-    return result.data;
+    return response.json();
   },
 
   async create(data: CreateMemberRequest): Promise<MemberDTO> {

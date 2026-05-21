@@ -1,7 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
 import { MemberRepository } from '../domain/MemberRepository.js';
-import { MemberDTO, CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
+import { MemberDTO, CreateMemberRequest, UpdateMemberRequest, GetMembersFilters } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -53,12 +54,18 @@ export class PostgresMemberRepository implements MemberRepository {
         return member ? this.mapToDTO(member) : null;
     }
 
-    async findAll(): Promise<MemberDTO[]> {
-        const members = await prisma.member.findMany({
-            orderBy: { created_at: 'desc' },
-        });
+    async findAll(filters?: GetMembersFilters): Promise<{ data: MemberDTO[]; total: number }> {
+        const { skip, take } = applyPagination(filters);
+        const [members, total] = await prisma.$transaction([
+            prisma.member.findMany({
+                orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+                skip,
+                take,
+            }),
+            prisma.member.count(),
+        ]);
 
-        return members.map(this.mapToDTO);
+        return { data: members.map(this.mapToDTO), total };
     }
 
     async update(id: string, data: UpdateMemberRequest): Promise<MemberDTO> {

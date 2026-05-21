@@ -4,6 +4,7 @@ import { GetMembersUseCase } from '../application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from '../application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from '../application/DeleteMemberUseCase.js';
 import { CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
+import { paginationQuerySchema } from './shared/paginationSchema.js';
 
 export class MemberController {
     constructor(
@@ -13,10 +14,15 @@ export class MemberController {
         private readonly deleteMemberUseCase: DeleteMemberUseCase,
     ) {}
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
+        const parsed = paginationQuerySchema.safeParse(request.query);
+        if (!parsed.success) {
+            const message = parsed.error.issues[0]?.message ?? 'Parámetro de paginación inválido';
+            return reply.status(400).send({ error: message });
+        }
         try {
-            const socios = await this.getMembersUseCase.execute();
-            return reply.status(200).send({ data: socios });
+            const result = await this.getMembersUseCase.execute(parsed.data);
+            return reply.status(200).send(result);
         } catch (error: any) {
             return reply.status(500).send({ error: error.message });
         }

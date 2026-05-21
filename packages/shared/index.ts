@@ -1,4 +1,24 @@
 // ==========================================
+// Pagination (TDD-0025)
+// ==========================================
+export interface PaginationParams {
+  page?: number;       // base 1, default 1
+  page_size?: number;  // default 20, min 1, max 100
+}
+
+export interface PaginationMeta {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface Paginated<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+// ==========================================
 // Member
 // ==========================================
 export type MemberCategory = 'Pleno' | 'Cadete' | 'Honorario';
@@ -80,10 +100,15 @@ export interface UpdateSportRequest {
   cupoMaximo?: number;
 }
 
-export interface GetLockersFilters {
+export interface GetLockersFilters extends PaginationParams {
   estado?: LockerEstado;
   ubicacion?: LockerUbicacion;
 }
+
+export interface GetMembersFilters extends PaginationParams {}
+export interface GetSportsFilters extends PaginationParams {}
+export interface GetMedicalCertificatesFilters extends PaginationParams {}
+export interface GetPaymentsFilters extends PaginationParams {}
 
 export interface UpdateLockerEstadoRequest {
   estado: LockerEstado;
@@ -126,7 +151,7 @@ export interface UpdateDisciplineRequest {
 
 export type DisciplineStatus = 'active' | 'expired' | 'upcoming';
 
-export interface ListDisciplinesFilters {
+export interface ListDisciplinesFilters extends PaginationParams {
   member_id?: string;
   status?: DisciplineStatus;
   sort_desc?: boolean;

@@ -24,7 +24,8 @@ describe('MemberController', () => {
     const mockRequest = {
         log: { info: vi.fn() },
         body: { name: 'Juan' },
-        params: { id: '123' }
+        params: { id: '123' },
+        query: {}
     };
 
     beforeEach(() => {
@@ -90,14 +91,17 @@ describe('MemberController', () => {
     });
 
     describe('getAll', () => {
-        it('debe devolver status 200 y la lista de socios', async () => {
-            const mockSocios = [{ id: '1', name: 'A' }, { id: '2', name: 'B' }];
-            mockGetUseCase.execute.mockResolvedValueOnce(mockSocios);
-            
+        it('debe devolver status 200 y la lista paginada de socios', async () => {
+            const mockResult = {
+                data: [{ id: '1', name: 'A' }, { id: '2', name: 'B' }],
+                pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 },
+            };
+            mockGetUseCase.execute.mockResolvedValueOnce(mockResult);
+
             await controller.getAll(mockRequest as any, mockReply as any);
-            
+
             expect(mockReply.status).toHaveBeenCalledWith(200);
-            expect(mockReply.send).toHaveBeenCalledWith({ data: mockSocios });
+            expect(mockReply.send).toHaveBeenCalledWith(mockResult);
         });
 
         it('debe devolver status 500 si falla el caso de uso', async () => {

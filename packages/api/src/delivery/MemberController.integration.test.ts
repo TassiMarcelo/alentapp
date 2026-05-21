@@ -8,7 +8,7 @@ import { CreateMemberRequest } from '@alentapp/shared';
 vi.mock('../infrastructure/PostgresMemberRepository.js', () => {
     return {
         PostgresMemberRepository: class {
-            async findAll() { return [{ id: '1', name: 'Socio Existente' }]; }
+            async findAll() { return { data: [{ id: '1', name: 'Socio Existente' }], total: 1 }; }
             async findById(id: string) { return id === '1' ? { id: '1', name: 'Socio Existente', birthdate: '1990-01-01' } : null; }
             async findByDni(dni: string) { return dni === '12345678' ? { id: '1', dni: '12345678' } : null; }
             async create(data: any) { return { id: '2', ...data, category: data.category || 'Pleno', status: 'Activo' }; }

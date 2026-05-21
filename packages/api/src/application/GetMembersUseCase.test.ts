@@ -13,12 +13,13 @@ describe('GetMembersUseCase', () => {
         vi.clearAllMocks();
     });
 
-    it('debe retornar la lista de miembros', async () => {
+    it('debe retornar la lista paginada de miembros', async () => {
         const mockMembers = [{ id: '1', name: 'A' }, { id: '2', name: 'B' }];
-        vi.mocked(mockMemberRepo.findAll).mockResolvedValueOnce(mockMembers as any);
-        
+        vi.mocked(mockMemberRepo.findAll).mockResolvedValueOnce({ data: mockMembers, total: 2 } as any);
+
         const result = await useCase.execute();
-        expect(result).toEqual(mockMembers);
+        expect(result.data).toEqual(mockMembers);
+        expect(result.pagination).toEqual({ page: 1, page_size: 20, total: 2, total_pages: 1 });
         expect(mockMemberRepo.findAll).toHaveBeenCalledOnce();
     });
 });

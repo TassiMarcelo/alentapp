@@ -28,7 +28,7 @@ describe('MembersView', () => {
 
   it('debe mostrar el estado de carga y luego renderizar una tabla vacía', async () => {
     // Simulamos que el backend no tiene socios
-    vi.mocked(membersService.getAll).mockResolvedValueOnce([]);
+    vi.mocked(membersService.getAll).mockResolvedValueOnce({ data: [], pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 } });
 
     renderWithProviders(<MembersView />);
 
@@ -49,7 +49,7 @@ describe('MembersView', () => {
       { id: '1', name: 'Juan Perez', dni: '12345678', email: 'juan@test.com', birthdate: '1990-01-01', category: 'Pleno', status: 'Activo', created_at: new Date().toISOString() },
       { id: '2', name: 'Maria Cadete', dni: '87654321', email: 'maria@test.com', birthdate: '2015-01-01', category: 'Cadete', status: 'Moroso', created_at: new Date().toISOString() }
     ] as MemberDTO[];
-    vi.mocked(membersService.getAll).mockResolvedValueOnce(mockMembers);
+    vi.mocked(membersService.getAll).mockResolvedValueOnce({ data: mockMembers, pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 } });
 
     renderWithProviders(<MembersView />);
 
@@ -83,7 +83,7 @@ describe('MembersView', () => {
     const user = (await import('@testing-library/user-event')).default.setup();
     
     // Configuramos el mock para que devuelva algo en todas las llamadas, no solo en la primera
-    vi.mocked(membersService.getAll).mockResolvedValue([]);
+    vi.mocked(membersService.getAll).mockResolvedValue({ data: [], pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 } });
     vi.mocked(membersService.create).mockResolvedValueOnce({
       id: '3', name: 'Nuevo Socio', dni: '11111111', email: 'nuevo@test.com', birthdate: '2000-01-01', category: 'Pleno', status: 'Activo', created_at: new Date().toISOString()
     });
@@ -126,7 +126,7 @@ describe('MembersView', () => {
       { id: '1', name: 'Juan Perez', dni: '12345678', email: 'juan@test.com', birthdate: '1990-01-01', category: 'Pleno', status: 'Activo', created_at: new Date().toISOString() }
     ] as MemberDTO[];
     
-    vi.mocked(membersService.getAll).mockResolvedValue(mockMembers);
+    vi.mocked(membersService.getAll).mockResolvedValue({ data: mockMembers, pagination: { page: 1, page_size: 20, total: mockMembers.length, total_pages: 1 } });
     vi.mocked(membersService.delete).mockResolvedValueOnce(undefined);
 
     // Interceptamos la alerta del navegador
@@ -155,7 +155,7 @@ describe('MembersView', () => {
       { id: '1', name: 'Juan Perez', dni: '12345678', email: 'juan@test.com', birthdate: '1990-01-01', category: 'Pleno', status: 'Activo', created_at: new Date().toISOString() }
     ] as MemberDTO[];
     
-    vi.mocked(membersService.getAll).mockResolvedValue(mockMembers);
+    vi.mocked(membersService.getAll).mockResolvedValue({ data: mockMembers, pagination: { page: 1, page_size: 20, total: mockMembers.length, total_pages: 1 } });
     vi.mocked(membersService.update).mockResolvedValueOnce({
       ...mockMembers[0],
       name: 'Juan Perez Editado'

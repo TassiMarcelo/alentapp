@@ -15,7 +15,10 @@ import {
 import { LuPlus, LuPencil, LuTrash2, LuRefreshCw } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { membersService } from "../services/members";
-import type { MemberDTO, CreateMemberRequest, UpdateMemberRequest, MemberCategory, MemberStatus } from "@alentapp/shared";
+import type { MemberDTO, CreateMemberRequest, UpdateMemberRequest, MemberCategory, MemberStatus, PaginationMeta } from "@alentapp/shared";
+import { PaginationControls } from "../components/ui/pagination-controls";
+
+const PAGE_SIZE = 20;
 import { 
   DialogRoot, 
   DialogContent, 
@@ -54,6 +57,8 @@ const statusCategories = createListCollection({
 
 export function MembersView() {
   const [members, setMembers] = useState<MemberDTO[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: PAGE_SIZE, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -75,8 +80,9 @@ export function MembersView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page, page_size: PAGE_SIZE });
+      setMembers(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || "Error al cargar los miembros");
     } finally {
@@ -134,7 +140,7 @@ export function MembersView() {
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [page]);
 
   return (
     <DialogRoot open={isDialogOpen} onOpenChange={(e) => setIsDialogOpen(e.open)}>
@@ -355,6 +361,9 @@ export function MembersView() {
               ))}
             </Table.Body>
           </Table.Root>
+        )}
+        {!isLoading && members.length > 0 && (
+          <PaginationControls pagination={pagination} onPageChange={setPage} />
         )}
       </Box>
     </Stack>
