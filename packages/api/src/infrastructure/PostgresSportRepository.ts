@@ -1,7 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
 import { SportRepository } from '../domain/SportRepository.js';
-import { SportDTO, CreateSportRequest } from '@alentapp/shared';
+import { SportDTO, CreateSportRequest, GetSportsFilters } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -37,11 +38,17 @@ export class PostgresSportRepository implements SportRepository {
         return this.mapToDTO(sport);
     }
 
-    async getAll(): Promise<SportDTO[]> {
-        const sports = await prisma.sport.findMany({
-            orderBy: { nombre: 'asc' },
-        });
-        return sports.map(this.mapToDTO.bind(this));
+    async getAll(filters?: GetSportsFilters): Promise<{ data: SportDTO[]; total: number }> {
+        const { skip, take } = applyPagination(filters);
+        const [sports, total] = await prisma.$transaction([
+            prisma.sport.findMany({
+                orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+                skip,
+                take,
+            }),
+            prisma.sport.count(),
+        ]);
+        return { data: sports.map(this.mapToDTO.bind(this)), total };
     }
 
     async findByName(nombre: string): Promise<SportDTO | null> {

@@ -4,6 +4,7 @@ import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
 import { GetSportsUseCase } from '../application/GetSportsUseCase.js';
 import { DeleteSportUseCase } from '../application/DeleteSportUseCase.js';
 import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
+import { paginationQuerySchema } from './shared/paginationSchema.js';
 
 export class SportController {
     constructor(
@@ -13,10 +14,15 @@ export class SportController {
         private readonly deleteSportUseCase: DeleteSportUseCase
     ) {}
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
+        const parsed = paginationQuerySchema.safeParse(request.query);
+        if (!parsed.success) {
+            const message = parsed.error.issues[0]?.message ?? 'Parámetro de paginación inválido';
+            return reply.status(400).send({ error: message });
+        }
         try {
-            const sports = await this.getSportsUseCase.execute();
-            return reply.status(200).send(sports);
+            const result = await this.getSportsUseCase.execute(parsed.data);
+            return reply.status(200).send(result);
         } catch (error: any) {
             console.error('Get Sports Error:', error);
             return reply.status(500).send({ error: 'Error interno al obtener los deportes' });

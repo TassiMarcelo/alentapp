@@ -6,7 +6,8 @@ import { LuRefreshCw, LuPlus, LuPencil, LuTrash2, LuUserPlus } from 'react-icons
 import { useEffect, useState } from 'react';
 import { sportsService } from '../services/sports';
 import { membersService } from '../services/members';
-import type { SportDTO, MemberDTO } from '@alentapp/shared';
+import type { SportDTO, MemberDTO, PaginationMeta } from '@alentapp/shared';
+import { PaginationControls } from '../components/ui/pagination-controls';
 import {
   DialogRoot, DialogContent, DialogHeader, DialogTitle,
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
@@ -21,6 +22,8 @@ type Modal = 'none' | 'create' | 'assign' | 'edit';
 
 export function SportsView() {
   const [sports, setSports] = useState<SportDTO[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +55,9 @@ export function SportsView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await sportsService.getAll();
-      setSports(data);
+      const result = await sportsService.getAll({ page, page_size: 20 });
+      setSports(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || 'Error al cargar los deportes');
     } finally {
@@ -63,8 +67,8 @@ export function SportsView() {
 
   const fetchMembers = async () => {
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page_size: 100 });
+      setMembers(result.data);
     } catch { /* silencioso */ }
   };
 
@@ -135,7 +139,7 @@ export function SportsView() {
     }
   };
 
-  useEffect(() => { void fetchSports(); }, []);
+  useEffect(() => { void fetchSports(); }, [page]);
   useEffect(() => { void fetchMembers(); }, []);
 
   return (
@@ -231,6 +235,9 @@ export function SportsView() {
                 )}
               </Table.Body>
             </Table.Root>
+            {!isLoading && sports.length > 0 && (
+              <PaginationControls pagination={pagination} onPageChange={setPage} />
+            )}
           </Box>
         )}
       </Stack>

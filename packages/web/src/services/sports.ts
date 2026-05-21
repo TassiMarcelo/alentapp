@@ -1,10 +1,14 @@
-import type { SportDTO, CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
+import type { SportDTO, CreateSportRequest, UpdateSportRequest, Paginated, PaginationParams } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
 export const sportsService = {
-  async getAll(): Promise<SportDTO[]> {
-    const response = await fetch(`${API_URL}/sports`);
+  async getAll(params?: PaginationParams): Promise<Paginated<SportDTO>> {
+    const search = new URLSearchParams();
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.page_size) search.set('page_size', String(params.page_size));
+    const qs = search.toString();
+    const response = await fetch(`${API_URL}/sports${qs ? `?${qs}` : ''}`);
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || 'Error al obtener deportes');
