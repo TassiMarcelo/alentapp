@@ -6,7 +6,8 @@ import { LuPlus, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
-import type { DisciplineDTO, MemberDTO, DisciplineStatus } from '@alentapp/shared';
+import type { DisciplineDTO, MemberDTO, DisciplineStatus, PaginationMeta } from '@alentapp/shared';
+import { PaginationControls } from '../components/ui/pagination-controls';
 import {
   DialogRoot, DialogContent, DialogHeader, DialogTitle,
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
@@ -41,6 +42,8 @@ const STATUS_OPTIONS: { label: string; value: '' | DisciplineStatus }[] = [
 
 export function DisciplinesView() {
   const [disciplines, setDisciplines] = useState<DisciplineDTO[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,8 +83,8 @@ export function DisciplinesView() {
 
   const fetchMembers = async () => {
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page_size: 100 });
+      setMembers(result.data);
     } catch { /* silencioso */ }
   };
 
@@ -89,11 +92,14 @@ export function DisciplinesView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await disciplinesService.list({
+      const result = await disciplinesService.list({
         member_id: filterMemberId || undefined,
         status: filterStatus || undefined,
+        page,
+        page_size: 20,
       });
-      setDisciplines(data);
+      setDisciplines(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || 'Error al cargar las sanciones');
     } finally {
@@ -191,7 +197,8 @@ export function DisciplinesView() {
   };
 
   useEffect(() => { void fetchMembers(); }, []);
-  useEffect(() => { void fetchDisciplines(); }, [filterMemberId, filterStatus]);
+  useEffect(() => { setPage(1); }, [filterMemberId, filterStatus]);
+  useEffect(() => { void fetchDisciplines(); }, [filterMemberId, filterStatus, page]);
 
   const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? id;
 
@@ -470,6 +477,9 @@ export function DisciplinesView() {
               ))}
             </Table.Body>
           </Table.Root>
+        )}
+        {!isLoading && disciplines.length > 0 && (
+          <PaginationControls pagination={pagination} onPageChange={setPage} />
         )}
       </Box>
     </>

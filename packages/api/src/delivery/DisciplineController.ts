@@ -25,6 +25,22 @@ const listQuerySchema = z.object({
       return val;
     }, z.boolean({ message: 'Filtro `sort_desc` debe ser booleano' }))
     .optional(),
+  page: z
+    .preprocess(
+      (v) => (v === undefined || v === '' ? undefined : Number(v)),
+      z.number().int().min(1, { message: 'El parámetro `page` debe ser un entero positivo' }),
+    )
+    .optional(),
+  page_size: z
+    .preprocess(
+      (v) => (v === undefined || v === '' ? undefined : Number(v)),
+      z
+        .number()
+        .int()
+        .min(1, { message: 'El parámetro `page_size` debe ser un entero positivo' })
+        .max(100, { message: 'El parámetro `page_size` no puede superar 100' }),
+    )
+    .optional(),
 });
 
 const updateBodySchema = z
@@ -75,8 +91,8 @@ export class DisciplineController {
     }
 
     try {
-      const disciplines = await this.listDisciplinesUseCase.execute(parsed.data);
-      return reply.status(200).send(disciplines);
+      const result = await this.listDisciplinesUseCase.execute(parsed.data);
+      return reply.status(200).send(result);
     } catch {
       return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
     }

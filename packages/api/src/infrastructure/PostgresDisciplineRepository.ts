@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/client/client.js';
 import { DisciplineRepository, FindAllDisciplinesFilters } from '../domain/DisciplineRepository.js';
 import { DisciplineDTO, CreateDisciplineRequest, UpdateDisciplineRequest } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
@@ -25,7 +26,7 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
     return this.mapToDTO(discipline);
   }
 
-  async findAll(filters: FindAllDisciplinesFilters): Promise<DisciplineDTO[]> {
+  async findAll(filters: FindAllDisciplinesFilters): Promise<{ data: DisciplineDTO[]; total: number }> {
     const where: any = { deleted_at: null };
 
     if (filters.member_id) {
@@ -43,12 +44,19 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
       }
     }
 
-    const disciplines = await prisma.discipline.findMany({
-      where,
-      orderBy: { start_date: filters.sort_desc === false ? 'asc' : 'desc' },
-    });
+    const { skip, take } = applyPagination(filters);
+    const orderDir = filters.sort_desc === false ? 'asc' : 'desc';
+    const [disciplines, total] = await prisma.$transaction([
+      prisma.discipline.findMany({
+        where,
+        orderBy: [{ start_date: orderDir }, { id: 'asc' }],
+        skip,
+        take,
+      }),
+      prisma.discipline.count({ where }),
+    ]);
 
-    return disciplines.map((d) => this.mapToDTO(d));
+    return { data: disciplines.map((d) => this.mapToDTO(d)), total };
   }
 
   async findById(id: string): Promise<DisciplineDTO | null> {

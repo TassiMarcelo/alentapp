@@ -3,6 +3,7 @@ import type {
   CreateDisciplineRequest,
   UpdateDisciplineRequest,
   ListDisciplinesFilters,
+  Paginated,
 } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
@@ -21,11 +22,13 @@ export const disciplinesService = {
     return response.json();
   },
 
-  async list(filters: ListDisciplinesFilters = {}): Promise<DisciplineDTO[]> {
+  async list(filters: ListDisciplinesFilters = {}): Promise<Paginated<DisciplineDTO>> {
     const params = new URLSearchParams();
     if (filters.member_id) params.set('member_id', filters.member_id);
     if (filters.status) params.set('status', filters.status);
     if (filters.sort_desc !== undefined) params.set('sort_desc', String(filters.sort_desc));
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.page_size) params.set('page_size', String(filters.page_size));
 
     const qs = params.toString();
     const response = await fetch(`${API_URL}/disciplines${qs ? `?${qs}` : ''}`);
