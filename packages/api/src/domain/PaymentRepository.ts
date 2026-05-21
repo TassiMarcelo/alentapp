@@ -2,7 +2,8 @@ import {
   PaymentDTO,
   CreatePaymentRequest,
   UpdatePaymentRequest,
-  PaymentStatus
+  PaymentStatus,
+  GetPaymentsFilters
 } from '@alentapp/shared';
 
 // Puerto de salida para Payment
@@ -28,8 +29,8 @@ export interface PaymentRepository {
     anioReferencia: number
   ): Promise<PaymentDTO | null>;
 
-  // Obtener todos los pagos
-  findAll(): Promise<PaymentDTO[]>;
+  // Obtener todos los pagos (paginado)
+  findAll(filters?: GetPaymentsFilters): Promise<{ data: PaymentDTO[]; total: number }>;
 
   // Actualizar (update, cancel, pay usan este)
   update(

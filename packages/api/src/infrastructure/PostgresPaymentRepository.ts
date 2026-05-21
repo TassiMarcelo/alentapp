@@ -4,8 +4,10 @@ import { PaymentRepository } from '../domain/PaymentRepository.js';
 import {
     PaymentDTO,
     CreatePaymentRequest,
-    UpdatePaymentRequest
+    UpdatePaymentRequest,
+    GetPaymentsFilters
 } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL no esta definida');
@@ -69,12 +71,18 @@ export class PostgresPaymentRepository implements PaymentRepository {
         return payment ? this.mapToDTO(payment) : null;
     }
 
-    async findAll(): Promise<PaymentDTO[]> {
-        const payments = await prisma.payment.findMany({
-            orderBy: { created_at: 'desc' },
-        });
+    async findAll(filters?: GetPaymentsFilters): Promise<{ data: PaymentDTO[]; total: number }> {
+        const { skip, take } = applyPagination(filters);
+        const [payments, total] = await prisma.$transaction([
+            prisma.payment.findMany({
+                orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+                skip,
+                take,
+            }),
+            prisma.payment.count(),
+        ]);
 
-        return payments.map(this.mapToDTO);
+        return { data: payments.map(this.mapToDTO), total };
     }
 
     async update(id: string, data: Partial<PaymentDTO>): Promise<PaymentDTO> {

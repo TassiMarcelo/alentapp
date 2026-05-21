@@ -10,6 +10,7 @@ import {
     UpdatePaymentRequest,
     PayPaymentRequest
 } from '@alentapp/shared';
+import { paginationQuerySchema } from './shared/paginationSchema.js';
 
 export class PaymentController {
     constructor(
@@ -20,14 +21,17 @@ export class PaymentController {
         private readonly payPaymentUseCase: PayPaymentUseCase,
     ) {}
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
+        const parsed = paginationQuerySchema.safeParse(request.query);
+        if (!parsed.success) {
+            const message = parsed.error.issues[0]?.message ?? 'Parámetro de paginación inválido';
+            return reply.status(400).send({ error: message });
+        }
         try {
 
-            const payments = await this.getPaymentsUseCase.execute();
+            const result = await this.getPaymentsUseCase.execute(parsed.data);
 
-            return reply.status(200).send({
-                data: payments
-            });
+            return reply.status(200).send(result);
 
         } catch (error: any) {
 

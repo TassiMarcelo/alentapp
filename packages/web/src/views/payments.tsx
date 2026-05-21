@@ -16,7 +16,8 @@ import { useEffect, useState } from "react";
 import { paymentsService } from "../services/payments";
 import { membersService } from "../services/members";
 import type { PaymentDTO } from "../types/payment";
-import type { MemberDTO } from "@alentapp/shared";
+import type { MemberDTO, PaginationMeta } from "@alentapp/shared";
+import { PaginationControls } from "../components/ui/pagination-controls";
 
 import {
   DialogRoot,
@@ -41,6 +42,8 @@ import {
 
 export function PaymentsView() {
   const [payments, setPayments] = useState<PaymentDTO[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +75,8 @@ export function PaymentsView() {
 
   const fetchMembers = async () => {
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page_size: 100 });
+      setMembers(result.data);
     } catch { /* silencioso */ }
   };
 
@@ -81,8 +84,9 @@ export function PaymentsView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await paymentsService.getAll();
-      setPayments(data);
+      const result = await paymentsService.getAll({ page, page_size: 20 });
+      setPayments(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || "Error al cargar pagos");
     } finally {
@@ -92,8 +96,10 @@ export function PaymentsView() {
 
   useEffect(() => {
     fetchMembers();
-    fetchPayments();
   }, []);
+  useEffect(() => {
+    fetchPayments();
+  }, [page]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,6 +406,9 @@ export function PaymentsView() {
                 ))}
               </Table.Body>
             </Table.Root>
+          )}
+          {!isLoading && payments.length > 0 && (
+            <PaginationControls pagination={pagination} onPageChange={setPage} />
           )}
         </Box>
       </Stack>
