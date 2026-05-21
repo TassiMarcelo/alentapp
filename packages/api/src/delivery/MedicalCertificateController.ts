@@ -5,6 +5,7 @@ import { UpdateMedicalCertificateUseCase } from '../application/UpdateMedicalCer
 import { DeleteMedicalCertificateUseCase } from '../application/DeleteMedicalCertificateUseCase.js';
 import { CreateMedicalCertificateRequest, UpdateMedicalCertificateRequest } from '@alentapp/shared';
 import { ValidationError, NotFoundError, GoneError } from '../domain/errors.js';
+import { paginationQuerySchema } from './shared/paginationSchema.js';
 
 export class MedicalCertificateController {
     constructor(
@@ -79,9 +80,14 @@ export class MedicalCertificateController {
         }
     }
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
+        const parsed = paginationQuerySchema.safeParse(request.query);
+        if (!parsed.success) {
+            const message = parsed.error.issues[0]?.message ?? 'Parámetro de paginación inválido';
+            return reply.status(400).send({ message });
+        }
         try {
-            const result = await this.getUseCase.execute();
+            const result = await this.getUseCase.execute(parsed.data);
             return reply.status(200).send(result);
         } catch (error: any) {
             return this.handleError(error, reply);

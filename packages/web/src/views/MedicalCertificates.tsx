@@ -18,7 +18,9 @@ import type {
   MedicalCertificateDTO,
   MemberDTO,
   UpdateMedicalCertificateRequest,
+  PaginationMeta,
 } from '@alentapp/shared';
+import { PaginationControls } from '../components/ui/pagination-controls';
 import { membersService } from '../services/members';
 import { medicalCertificatesService } from '../services/medicalcertificates';
 import {
@@ -52,6 +54,8 @@ type EditForm = {
 
 export function MedicalCertificatesView() {
   const [certificates, setCertificates] = useState<MedicalCertificateDTO[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [members, setMembers] = useState<MemberDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,8 +84,8 @@ export function MedicalCertificatesView() {
 
   const fetchMembers = async () => {
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const result = await membersService.getAll({ page_size: 100 });
+      setMembers(result.data);
     } catch { /* silencioso */ }
   };
 
@@ -89,8 +93,9 @@ export function MedicalCertificatesView() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await medicalCertificatesService.getAll();
-      setCertificates(data);
+      const result = await medicalCertificatesService.getAll({ page, page_size: 20 });
+      setCertificates(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || 'Error al cargar los certificados médicos');
     } finally {
@@ -194,8 +199,10 @@ export function MedicalCertificatesView() {
 
   useEffect(() => {
     void fetchMembers();
-    void fetchCertificates();
   }, []);
+  useEffect(() => {
+    void fetchCertificates();
+  }, [page]);
 
   const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? '—';
 
@@ -465,6 +472,9 @@ export function MedicalCertificatesView() {
               ))}
             </Table.Body>
           </Table.Root>
+        )}
+        {!isLoading && certificates.length > 0 && (
+          <PaginationControls pagination={pagination} onPageChange={setPage} />
         )}
         </Box>
       </Stack>

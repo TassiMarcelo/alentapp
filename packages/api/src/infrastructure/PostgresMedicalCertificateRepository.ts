@@ -5,7 +5,8 @@ import {
     NewMedicalCertificate,
     TxClient,
 } from '../domain/MedicalCertificateRepository.js';
-import { MedicalCertificateDTO, UpdateMedicalCertificateRequest } from '@alentapp/shared';
+import { MedicalCertificateDTO, UpdateMedicalCertificateRequest, GetMedicalCertificatesFilters } from '@alentapp/shared';
+import { applyPagination } from '../application/shared/paginate.js';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -54,12 +55,19 @@ export class PostgresMedicalCertificateRepository implements MedicalCertificateR
         return certs.map(cert => this.mapToDTO(cert));
     }
 
-    async findAll(): Promise<MedicalCertificateDTO[]> {
-        const certs = await prisma.medicalCertificate.findMany({
-            where: { deleted_at: null },
-            orderBy: { created_at: 'desc' },
-        });
-        return certs.map(cert => this.mapToDTO(cert));
+    async findAll(filters?: GetMedicalCertificatesFilters): Promise<{ data: MedicalCertificateDTO[]; total: number }> {
+        const where = { deleted_at: null };
+        const { skip, take } = applyPagination(filters);
+        const [certs, total] = await prisma.$transaction([
+            prisma.medicalCertificate.findMany({
+                where,
+                orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+                skip,
+                take,
+            }),
+            prisma.medicalCertificate.count({ where }),
+        ]);
+        return { data: certs.map(cert => this.mapToDTO(cert)), total };
     }
 
     async update(

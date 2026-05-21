@@ -1,4 +1,4 @@
-import { MedicalCertificateDTO, UpdateMedicalCertificateRequest } from '@alentapp/shared';
+import { MedicalCertificateDTO, UpdateMedicalCertificateRequest, GetMedicalCertificatesFilters } from '@alentapp/shared';
 
 // Datos de dominio para persistir un certificado (snake_case, ya validado/mapeado)
 export interface NewMedicalCertificate {
@@ -21,7 +21,7 @@ export interface MedicalCertificateRepository {
   runInTransaction<T>(work: (tx: TxClient) => Promise<T>): Promise<T>;
 
   findByMemberId(memberId: string): Promise<MedicalCertificateDTO[]>;
-  findAll(): Promise<MedicalCertificateDTO[]>;
+  findAll(filters?: GetMedicalCertificatesFilters): Promise<{ data: MedicalCertificateDTO[]; total: number }>;
   findById(id: string): Promise<MedicalCertificateDTO | null>;
   // TDD-0019: edición parcial; tx opcional para invalidar previos + actualizar de forma atómica
   update(id: string, data: UpdateMedicalCertificateRequest, tx?: TxClient): Promise<MedicalCertificateDTO>;

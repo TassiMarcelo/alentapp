@@ -2,6 +2,8 @@ import type {
   MedicalCertificateDTO,
   CreateMedicalCertificateRequest,
   UpdateMedicalCertificateRequest,
+  Paginated,
+  PaginationParams,
 } from '@alentapp/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
@@ -19,8 +21,12 @@ export const medicalCertificatesService = {
     }
     return response.json();
   },
-  async getAll(): Promise<MedicalCertificateDTO[]> {
-    const response = await fetch(`${API_URL}/medical-certificates`, {
+  async getAll(params?: PaginationParams): Promise<Paginated<MedicalCertificateDTO>> {
+    const search = new URLSearchParams();
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.page_size) search.set('page_size', String(params.page_size));
+    const qs = search.toString();
+    const response = await fetch(`${API_URL}/medical-certificates${qs ? `?${qs}` : ''}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
