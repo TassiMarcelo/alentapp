@@ -27,6 +27,7 @@ import {
   DialogCloseTrigger
 } from "../components/ui/dialog";
 import { Field } from "../components/ui/field";
+import { notify } from "../components/ui/toaster";
 import { 
   SelectRoot, 
   SelectTrigger, 
@@ -115,7 +116,7 @@ export function MembersView() {
       setIsDialogOpen(false);
       fetchMembers(); // Refresh the list
     } catch (err: any) {
-      alert(err.message || "Error al guardar el miembro");
+      notify.error(err.message || "Error al guardar el miembro");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +128,7 @@ export function MembersView() {
         await membersService.delete(id);
         fetchMembers(); // Refresh the list
       } catch (err: any) {
-        alert(err.message || "Error al eliminar el miembro");
+        notify.error(err.message || "Error al eliminar el miembro");
       }
     }
   };

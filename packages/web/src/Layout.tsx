@@ -1,4 +1,5 @@
 import { Provider } from './components/ui/provider';
+import { Toaster } from './components/ui/toaster';
 import { Box, Container, Flex, Text, HStack } from '@chakra-ui/react';
 
 import { Outlet, Link as RouterLink } from "react-router";
@@ -87,6 +88,7 @@ function Layout() {
             <Container maxW="7xl" py="10">
                 <Outlet />
             </Container>
+            <Toaster />
         </Provider>
     );
 }
