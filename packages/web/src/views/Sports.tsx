@@ -12,6 +12,7 @@ import {
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
 } from '../components/ui/dialog';
 import { Field } from '../components/ui/field';
+import { notify } from '../components/ui/toaster';
 import {
   SelectRoot, SelectTrigger, SelectValueText,
   SelectContent, SelectItem, createListCollection,
@@ -86,7 +87,7 @@ export function SportsView() {
       });
       void fetchSports();
     } catch (err: any) {
-      alert(err.message || 'Error al crear el deporte');
+      notify.error(err.message || 'Error al crear el deporte');
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +105,7 @@ export function SportsView() {
       setModal('none');
       void fetchSports();
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar el deporte');
+      notify.error(err.message || 'Error al actualizar el deporte');
     } finally {
       setIsSubmitting(false);
     }
@@ -116,10 +117,10 @@ export function SportsView() {
     setIsSubmitting(true);
     try {
       // TODO: Conectar con backend para guardar inscripcion de deporte
-      alert('Funcionalidad de inscripción en desarrollo.');
+      notify.info('Funcionalidad de inscripción en desarrollo.');
       setModal('none');
     } catch (err: any) {
-      alert(err.message || 'Error al asignar el socio');
+      notify.error(err.message || 'Error al asignar el socio');
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +132,7 @@ export function SportsView() {
       await sportsService.delete(sport.id);
       void fetchSports();
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar el deporte');
+      notify.error(err.message || 'Error al eliminar el deporte');
     }
   };
 

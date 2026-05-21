@@ -17,6 +17,7 @@ import { paymentsService } from "../services/payments";
 import { membersService } from "../services/members";
 import type { PaymentDTO } from "../types/payment";
 import type { MemberDTO } from "@alentapp/shared";
+import { notify } from "../components/ui/toaster";
 
 import {
   DialogRoot,
@@ -104,7 +105,7 @@ export function PaymentsView() {
       setIsDialogOpen(false);
       fetchPayments();
     } catch (err: any) {
-      alert(err.message || "Error al crear pago");
+      notify.error(err.message || "Error al crear pago");
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +122,7 @@ export function PaymentsView() {
     if (!editingPayment) return;
 
     if (editMonto <= 0) {
-      alert("El monto debe ser mayor a 0");
+      notify.warning("El monto debe ser mayor a 0");
       return;
     }
 
@@ -132,7 +133,7 @@ export function PaymentsView() {
       setEditingPayment(null);
       fetchPayments();
     } catch (err: any) {
-      alert(err.message || "Error al actualizar pago");
+      notify.error(err.message || "Error al actualizar pago");
     } finally {
       setIsUpdating(false);
     }
@@ -143,7 +144,7 @@ export function PaymentsView() {
       await paymentsService.cancel(id);
       fetchPayments();
     } catch (err: any) {
-      alert(err.message);
+      notify.error(err.message || "Error al cancelar pago");
     }
   };
 
@@ -152,7 +153,7 @@ export function PaymentsView() {
       await paymentsService.pay(id);
       fetchPayments();
     } catch (err: any) {
-      alert(err.message);
+      notify.error(err.message || "Error al registrar pago");
     }
   };
 
