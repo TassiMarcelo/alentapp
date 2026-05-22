@@ -2,7 +2,7 @@ export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [2, 'always', [
-      'feat', 'fix', 'docs', 'chore', 'refactor',
+      'feat', 'fix', 'docs', 'chore', 'refactor','test',
     ]],
     'scope-empty': [2, 'never'],
     'scope-enum': [1, 'always', [
