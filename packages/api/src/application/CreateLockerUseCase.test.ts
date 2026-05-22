@@ -47,8 +47,7 @@ describe('CreateLockerUseCase', () => {
 
 
 
-    // mokeo dos cosas, cantidad de locker 0 y la creacion del locker con numero 1 para probar despeus sombre este numero.
-    //y pongo 0 porque por defecto el vi.clearallmocks dejaria el contador en indefinido .
+    // mokeo dos cosas, cantidad de locker 0 y simula un locker existente con numero 1 para probar despeus sombre este numero.
     it('debe lanzar error si el número ya está registrado', async () => {
     vi.mocked(mockLockerRepo.count).mockResolvedValueOnce(0);
     vi.mocked(mockLockerRepo.findByNumero).mockResolvedValueOnce({
@@ -65,6 +64,30 @@ describe('CreateLockerUseCase', () => {
     });
 
 
+    // creacion correcta 
+    it('debe crear el locker exitosamente', async () => {
+    vi.mocked(mockLockerRepo.count).mockResolvedValueOnce(0);
+    vi.mocked(mockLockerRepo.findByNumero).mockResolvedValueOnce(null);
+    vi.mocked(mockLockerRepo.create).mockResolvedValueOnce({
+        id: 'uuid-1',
+        numero: 1,
+        ubicacion: 'VESTUARIO_MASCULINO',
+        estado: 'DISPONIBLE',
+        fechaFinContrato: null,
+        socio: null,
+    });
+
+    const result = await useCase.execute({ numero: 1, ubicacion: 'VESTUARIO_MASCULINO' });
+
+    expect(mockLockerRepo.create).toHaveBeenCalledWith({
+        numero: 1,
+        ubicacion: 'VESTUARIO_MASCULINO',
+    });
+    expect(result.estado).toBe('DISPONIBLE');
+    expect(result.socio).toBeNull();
+    });
+
+    
 
 });
 
