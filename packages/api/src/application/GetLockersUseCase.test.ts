@@ -34,7 +34,16 @@ describe('GetLockersUseCase', () => {
 
     expect(result).toHaveLength(0);
     expect(result).toEqual([]);
-});
+    });
 
+    it('debe lanzar error si el estado es inválido', async () => {
+    await expect(useCase.execute({ estado: 'INVALIDO' as any }))
+        .rejects.toThrow('Filtro inválido');
+    });
+
+    it('debe lanzar error si la ubicación es inválida', async () => {
+        await expect(useCase.execute({ ubicacion: 'INVALIDA' as any }))
+            .rejects.toThrow('Filtro inválido');
+    });
 
 });
