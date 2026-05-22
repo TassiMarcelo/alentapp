@@ -67,7 +67,7 @@ feat(locker): add locker assignment validation
 | docs | Cambios en documentación |
 | chore | Tareas de mantenimiento |
 | refactor | Refactor sin cambiar comportamiento |
-
+| test | Tests unitarios, de integración o E2E |
 ---
 
 ### Scopes permitidos
