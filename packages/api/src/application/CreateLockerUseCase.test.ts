@@ -36,7 +36,15 @@ describe('CreateLockerUseCase', () => {
         .rejects.toThrow('Ubicación inválida');
     });
 
-   
+    // superar 100 lokers
+    it('debe lanzar error si ya existen 100 lockers', async () => {
+    vi.mocked(mockLockerRepo.count).mockResolvedValueOnce(100);
+
+    await expect(useCase.execute({ numero: 1, ubicacion: 'VESTUARIO_MASCULINO' }))
+        .rejects.toThrow('Se alcanzó el límite máximo de lockers');
+    });
+
+
 
 
 
