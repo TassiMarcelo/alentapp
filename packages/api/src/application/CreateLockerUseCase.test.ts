@@ -30,7 +30,15 @@ describe('CreateLockerUseCase', () => {
             .rejects.toThrow('Faltan campos requeridos');
     });
 
+    // ubicacion no corresponde al enum
+    it('debe lanzar error si la ubicación es inválida', async () => {
+    await expect(useCase.execute({ numero: 1, ubicacion: 'INVALIDA' as any }))
+        .rejects.toThrow('Ubicación inválida');
+    });
+
    
+
+
 
 });
 
