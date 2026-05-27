@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
@@ -160,7 +161,7 @@ describe('Locker API Integration Tests', () => {
         expect(body.error).toBe('El locker no existe');
     });
     });
-    
+
     it('debe retornar 409 si el locker está ocupado', async () => {
     const response = await app.inject({
         method: 'DELETE',
