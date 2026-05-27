@@ -26,7 +26,20 @@ vi.mock('../infrastructure/PostgresLockerRepository.js', () => {
             async create(data: any) {
                 return { id: 'uuid-2', ...data, estado: 'DISPONIBLE', fechaFinContrato: null, socio: null };
             }
-            async findById(id: string) { return null; }
+            async findById(id: string) { 
+                
+                if (id === 'uuid-ocupado') {
+                    return {
+                        id: 'uuid-ocupado',
+                        numero: 2,
+                        ubicacion: 'VESTUARIO_MASCULINO',
+                        estado: 'OCUPADO',
+                        fechaFinContrato: '2026-12-01',
+                        socio: { nombre: 'Juan', dni: '12345678' }
+                    };
+                }
+                return null;
+            }
             async findByMemberId(memberId: string) { return null; }
             async assign() { return null; }
             async release(id: string) { return null; }
@@ -48,6 +61,8 @@ describe('Locker API Integration Tests', () => {
     afterAll(async () => {
         await app.close();
     });
+
+
 
     describe('GET /api/v1/lockers', () => {
     it('debe retornar 200 y el listado de lockers', async () => {
@@ -76,6 +91,8 @@ describe('Locker API Integration Tests', () => {
         expect(body.error).toBe('Filtro inválido');
     });
     });
+
+
 
 
     describe('POST /api/v1/lockers', () => {
@@ -128,6 +145,9 @@ describe('Locker API Integration Tests', () => {
     expect(body.error).toBe('Ubicación inválida');
     }); 
 
+
+
+
     describe('DELETE /api/v1/lockers/:id', () => {
     it('debe retornar 404 si el locker no existe', async () => {
         const response = await app.inject({
@@ -140,9 +160,17 @@ describe('Locker API Integration Tests', () => {
         expect(body.error).toBe('El locker no existe');
     });
     });
+    
+    it('debe retornar 409 si el locker está ocupado', async () => {
+    const response = await app.inject({
+        method: 'DELETE',
+        url: '/api/v1/lockers/uuid-ocupado'
+    });
 
-
-
+    expect(response.statusCode).toBe(409);
+    const body = JSON.parse(response.payload);
+    expect(body.error).toBe('No se puede eliminar un locker que está ocupado');
+    });
 
 
 });
