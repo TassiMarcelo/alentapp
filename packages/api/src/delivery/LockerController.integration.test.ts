@@ -75,6 +75,74 @@ describe('Locker API Integration Tests', () => {
         const body = JSON.parse(response.payload);
         expect(body.error).toBe('Filtro inválido');
     });
-});
+    });
+
+
+    describe('POST /api/v1/lockers', () => {
+    it('debe retornar 201 y crear el locker', async () => {
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/lockers',
+            payload: {
+                numero: 5,
+                ubicacion: 'VESTUARIO_MASCULINO'
+            }
+        });
+
+        expect(response.statusCode).toBe(201);
+        const body = JSON.parse(response.payload);
+        expect(body.numero).toBe(5);
+        expect(body.estado).toBe('DISPONIBLE');
+        expect(body.socio).toBeNull();
+    });
+    }); 
+
+    it('debe retornar 409 si el número ya está registrado', async () => {
+    const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/lockers',
+        payload: {
+            numero: 1,
+            ubicacion: 'VESTUARIO_MASCULINO'
+        }
+    });
+
+    expect(response.statusCode).toBe(409);
+    const body = JSON.parse(response.payload);
+    expect(body.error).toBe('Ya existe un locker con ese número');
+    });
+
+
+    it('debe retornar 400 si la ubicación es inválida', async () => {
+    const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/lockers',
+        payload: {
+            numero: 99,
+            ubicacion: 'INVALIDA'
+        }
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = JSON.parse(response.payload);
+    expect(body.error).toBe('Ubicación inválida');
+    }); 
+
+    describe('DELETE /api/v1/lockers/:id', () => {
+    it('debe retornar 404 si el locker no existe', async () => {
+        const response = await app.inject({
+            method: 'DELETE',
+            url: '/api/v1/lockers/uuid-inexistente'
+        });
+
+        expect(response.statusCode).toBe(404);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe('El locker no existe');
+    });
+    });
+
+
+
+
 
 });
