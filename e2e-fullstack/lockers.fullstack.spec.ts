@@ -67,4 +67,23 @@ test.describe('Lockers Full-Stack E2E', () => {
   await expect(page.locator('.chakra-badge', { hasText: 'OCUPADO' })).toBeVisible({ timeout: 10000 });
 });
 
+
+
+test('debe liberar un locker ocupado y mostrarlo como disponible', async ({ page }) => {
+  await page.goto('/lockers');
+
+  // El locker #98 ya está OCUPADO del test anterior
+  await expect(page.locator('.chakra-badge', { hasText: 'OCUPADO' })).toBeVisible({ timeout: 10000 });
+
+  // Aceptamos el confirm
+  page.on('dialog', (dialog) => dialog.accept());
+
+  // Clic en Liberar
+  await page.getByRole('button', { name: 'Liberar' }).click();
+
+  // El locker debe aparecer como DISPONIBLE
+  await expect(page.locator('.chakra-badge', { hasText: 'DISPONIBLE' })).toBeVisible({ timeout: 10000 });
+});
+
+
 });
