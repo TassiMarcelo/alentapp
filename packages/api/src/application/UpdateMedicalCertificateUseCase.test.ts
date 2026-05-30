@@ -6,17 +6,21 @@ import { ValidationError, NotFoundError } from '../domain/errors.js';
 
 describe('UpdateMedicalCertificateUseCase', () => {
   const mockRepo = {
+    invalidateAllByMemberId: vi.fn(),
+    save: vi.fn(),
+    runInTransaction: vi.fn(),
+    findByMemberId: vi.fn(),
+    findAll: vi.fn(),
     findById: vi.fn(),
     update: vi.fn(),
-    invalidateAllByMemberId: vi.fn(),
-    runInTransaction: vi.fn(),
+    delete: vi.fn(),
   } as unknown as MedicalCertificateRepository;
 
   const useCase = new UpdateMedicalCertificateUseCase(mockRepo);
 
-  const mockExisting: MedicalCertificateDTO = {
-    id: 'cert-1',
-    member_id: 'member-1',
+  const existingCert: MedicalCertificateDTO = {
+    id: 'cert-uuid-1',
+    member_id: 'member-uuid-1',
     issue_date: '2026-01-01',
     expiry_date: '2026-12-31',
     doctor_license: 'MP12345',
@@ -26,54 +30,54 @@ describe('UpdateMedicalCertificateUseCase', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(mockRepo.findById).mockResolvedValue(mockExisting);
+    vi.mocked(mockRepo.findById).mockResolvedValue(existingCert);
     vi.mocked(mockRepo.update).mockImplementation(
-      async (_id, data) => ({ ...mockExisting, ...data }) as unknown as MedicalCertificateDTO,
+      async (_id, data) => ({ ...existingCert, ...data }) as unknown as MedicalCertificateDTO,
     );
-    // Ejecuta el callback transaccional pasándole un tx opaco.
+    // Ejecuta el callback transaccional con un tx opaco, como hace Prisma.$transaction.
     vi.mocked(mockRepo.runInTransaction).mockImplementation((work: any) => work('tx-client'));
+    vi.mocked(mockRepo.invalidateAllByMemberId).mockResolvedValue(undefined);
   });
 
-  it('rechaza un cuerpo de petición vacío con 400 (ValidationError)', async () => {
-    await expect(useCase.execute('cert-1', {})).rejects.toThrow(ValidationError);
-    await expect(useCase.execute('cert-1', {})).rejects.toThrow(
+  it('debe lanzar ValidationError 400 cuando el cuerpo de la petición está vacío (TDD-0019 §Casos de Borde)', async () => {
+    await expect(useCase.execute('cert-uuid-1', {})).rejects.toThrow(ValidationError);
+    await expect(useCase.execute('cert-uuid-1', {})).rejects.toThrow(
       'Debe proporcionar al menos un campo para actualizar',
     );
+    expect(mockRepo.findById).not.toHaveBeenCalled();
+    expect(mockRepo.update).not.toHaveBeenCalled();
   });
 
-  it('lanza NotFoundError si el certificado no existe', async () => {
+  it('debe lanzar NotFoundError 404 cuando el certificado indicado no existe (TDD-0019 §Casos de Borde)', async () => {
     vi.mocked(mockRepo.findById).mockResolvedValueOnce(null);
+
     await expect(
-      useCase.execute('cert-no', { doctorLicense: 'MP999' }),
+      useCase.execute('cert-inexistente', { doctorLicense: 'MP-NEW' }),
     ).rejects.toThrow(NotFoundError);
-  });
-
-  it('re-valida fechas combinando el valor enviado con el original (merge)', async () => {
-    // Solo se envía expiryDate anterior al issue_date original -> debe fallar.
     await expect(
-      useCase.execute('cert-1', { expiryDate: '2025-06-01' }),
+      useCase.execute('cert-inexistente', { doctorLicense: 'MP-NEW' }),
+    ).rejects.toThrow('El certificado médico indicado no existe');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('debe re-validar combinando el valor enviado con el original cuando solo se actualiza una fecha (TDD-0019 §Observaciones — Merge de Datos)', async () => {
+    // Solo llega expiryDate anterior al issue_date original (2026-01-01) → debe fallar.
+    await expect(
+      useCase.execute('cert-uuid-1', { expiryDate: '2025-06-01' }),
+    ).rejects.toThrow(ValidationError);
+    await expect(
+      useCase.execute('cert-uuid-1', { expiryDate: '2025-06-01' }),
     ).rejects.toThrow('La expiryDate debe ser estrictamente posterior a issueDate');
+    expect(mockRepo.update).not.toHaveBeenCalled();
   });
 
-  it('no valida fechas si solo se actualiza la matrícula', async () => {
-    await useCase.execute('cert-1', { doctorLicense: 'MP-NEW' });
-    expect(mockRepo.update).toHaveBeenCalledWith('cert-1', { doctorLicense: 'MP-NEW' });
-    expect(mockRepo.runInTransaction).not.toHaveBeenCalled();
-  });
+  it('debe invalidar los certificados previos del socio dentro de una transacción cuando isValidated pasa a true (TDD-0019 §Application)', async () => {
+    const result = await useCase.execute('cert-uuid-1', { isValidated: true });
 
-  it('invalida los certificados previos del socio cuando isValidated pasa a true', async () => {
-    await useCase.execute('cert-1', { isValidated: true });
-
+    expect(mockRepo.findById).toHaveBeenCalledWith('cert-uuid-1');
     expect(mockRepo.runInTransaction).toHaveBeenCalledTimes(1);
-    expect(mockRepo.invalidateAllByMemberId).toHaveBeenCalledWith('member-1', 'tx-client');
-    expect(mockRepo.update).toHaveBeenCalledWith('cert-1', { isValidated: true }, 'tx-client');
-  });
-
-  it('al marcar isValidated=false NO activa ni invalida otros certificados', async () => {
-    await useCase.execute('cert-1', { isValidated: false });
-
-    expect(mockRepo.invalidateAllByMemberId).not.toHaveBeenCalled();
-    expect(mockRepo.runInTransaction).not.toHaveBeenCalled();
-    expect(mockRepo.update).toHaveBeenCalledWith('cert-1', { isValidated: false });
+    expect(mockRepo.invalidateAllByMemberId).toHaveBeenCalledWith('member-uuid-1', 'tx-client');
+    expect(mockRepo.update).toHaveBeenCalledWith('cert-uuid-1', { isValidated: true }, 'tx-client');
+    expect(result.is_validated).toBe(true);
   });
 });
