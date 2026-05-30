@@ -5,6 +5,7 @@
     "main": "src/app.ts",
     "scripts": {
         "dev": "tsx watch src/app.ts",
+        "dev:test": "dotenv -e .env.test -- tsx watch src/app.ts",
         "test": "vitest",
         "coverage": "vitest run --coverage"
     },
@@ -18,10 +19,13 @@
     },
     "devDependencies": {
         "@types/pg": "^8.20.0",
+        "@types/supertest": "^7.2.0",
         "@vitest/coverage-v8": "^4.1.5",
         "dotenv": "^16.6.1",
+        "dotenv-cli": "^11.0.0",
         "pg": "^8.20.0",
         "prisma": "^7.7.0",
+        "supertest": "^7.2.2",
         "tsx": "^4.21.0",
         "vitest": "^4.1.5"
     }
