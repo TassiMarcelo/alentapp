@@ -51,7 +51,7 @@ test.describe('Cancel Payment FullStack E2E', () => {
             await api.dispose();
 
             // Abrir pantalla
-            await page.goto('http://localhost:5173/payments');
+            await page.goto('/payments');
 
             // Click en el primer botón Cancelar
             await page.getByRole(

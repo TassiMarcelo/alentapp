@@ -59,7 +59,7 @@ test.describe('Medical Certificates Full-Stack E2E — Update', () => {
     await expect(page.getByRole('cell', { name: originalLicense, exact: true })).toBeVisible({ timeout: 10000 });
 
     // Abrir el modal de edición desde el botón de la fila.
-    await page.getByRole('button', { name: 'Editar certificado' }).click();
+    await page.getByRole('row', { name: originalLicense }).getByRole('button', { name: 'Editar certificado' }).click();
     await expect(page.getByText('Editar Certificado Médico')).toBeVisible();
 
     // Cambiar solo la matrícula — el resto queda igual (PATCH parcial, TDD-0019).
