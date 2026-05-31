@@ -57,7 +57,7 @@ test.describe('Medical Certificates Full-Stack E2E — Delete', () => {
     await expect(page.getByRole('cell', { name: seededDoctorLicense, exact: true })).toBeVisible({ timeout: 10000 });
 
     // Abrir el cartel de confirmación desde el botón de la fila (TDD-0020 §Criterios).
-    await page.getByRole('button', { name: 'Eliminar certificado' }).click();
+    await page.getByRole('row', { name: seededDoctorLicense }).getByRole('button', { name: 'Eliminar certificado' }).click();
     await expect(page.getByText('¿Está seguro que desea eliminar este certificado?')).toBeVisible();
 
     // Confirmar el borrado lógico.
