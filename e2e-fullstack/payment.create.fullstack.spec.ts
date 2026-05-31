@@ -33,7 +33,7 @@ test.describe('Payments FullStack E2E', () => {
             await api.dispose();
 
             // Abrir pantalla
-            await page.goto('http://localhost:5173/payments');
+            await page.goto('/payments');
 
             // Abrir modal
             await page.getByRole(

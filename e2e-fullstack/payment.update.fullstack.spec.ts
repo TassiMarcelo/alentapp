@@ -51,7 +51,7 @@ test.describe('Update Payment FullStack E2E', () => {
             await api.dispose();
 
             // Abrir pantalla
-            await page.goto('http://localhost:5173/payments');
+            await page.goto('/payments');
 
             // Click en editar (primer botón lápiz)
             await page.getByLabel('Editar monto').first().click();
