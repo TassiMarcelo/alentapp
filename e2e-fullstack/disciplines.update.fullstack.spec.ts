@@ -53,7 +53,7 @@ test.describe('Disciplines Full-Stack E2E — Update', () => {
 
     await expect(page.getByRole('cell', { name: originalReason })).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: 'Editar sanción' }).click();
+    await page.getByRole('row', { name: originalReason }).getByRole('button', { name: 'Editar sanción' }).click();
     await expect(page.getByRole('heading', { name: 'Editar Sanción Disciplinaria' })).toBeVisible();
 
     const reasonInput = page.getByRole('textbox').filter({ hasNot: page.locator('[type="datetime-local"]') }).first();
