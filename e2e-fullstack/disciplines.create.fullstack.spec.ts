@@ -35,7 +35,7 @@ test.describe('Disciplines Full-Stack E2E — Create', () => {
   test('debe crear una sanción y verla en la tabla', async ({ page }) => {
     await page.goto('/disciplines');
 
-    await page.getByRole('button', { name: /Nueva Sanci[oó]n/i }).click();
+    await page.getByRole('button', { name: 'Nueva Sanción', exact: true }).click();
     await expect(page.getByText('Registrar Sanción Disciplinaria')).toBeVisible();
 
     await page.getByRole('combobox').first().click();

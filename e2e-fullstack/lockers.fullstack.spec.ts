@@ -81,8 +81,10 @@ test('debe liberar un locker ocupado y mostrarlo como disponible', async ({ page
   // Clic en Liberar
   await page.getByRole('button', { name: 'Liberar' }).click();
 
-  // El locker debe aparecer como DISPONIBLE
-  await expect(page.locator('.chakra-badge', { hasText: 'DISPONIBLE' })).toBeVisible({ timeout: 10000 });
+  // El locker #98 debe aparecer como DISPONIBLE
+  await expect(
+    page.getByRole('row', { name: /#98/ }).locator('.chakra-badge', { hasText: 'DISPONIBLE' })
+  ).toBeVisible({ timeout: 10000 });
 });
 
 
