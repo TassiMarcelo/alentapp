@@ -31,8 +31,17 @@ describe('UpdateMedicalCertificateUseCase', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(mockRepo.findById).mockResolvedValue(existingCert);
+    // Mapea los campos camelCase de la petición a las claves snake_case del DTO,
+    // como haría el repositorio real (un spread directo dejaría is_validated sin tocar).
     vi.mocked(mockRepo.update).mockImplementation(
-      async (_id, data) => ({ ...existingCert, ...data }) as unknown as MedicalCertificateDTO,
+      async (_id, data) =>
+        ({
+          ...existingCert,
+          issue_date: data.issueDate ?? existingCert.issue_date,
+          expiry_date: data.expiryDate ?? existingCert.expiry_date,
+          doctor_license: data.doctorLicense ?? existingCert.doctor_license,
+          is_validated: data.isValidated ?? existingCert.is_validated,
+        }) as unknown as MedicalCertificateDTO,
     );
     // Ejecuta el callback transaccional con un tx opaco, como hace Prisma.$transaction.
     vi.mocked(mockRepo.runInTransaction).mockImplementation((work: any) => work('tx-client'));
@@ -49,7 +58,9 @@ describe('UpdateMedicalCertificateUseCase', () => {
   });
 
   it('debe lanzar NotFoundError 404 cuando el certificado indicado no existe (TDD-0019 §Casos de Borde)', async () => {
-    vi.mocked(mockRepo.findById).mockResolvedValueOnce(null);
+    // El test ejecuta execute() dos veces (tipo y mensaje), así que el mock
+    // debe devolver null en ambas llamadas, no solo en la primera.
+    vi.mocked(mockRepo.findById).mockResolvedValue(null);
 
     await expect(
       useCase.execute('cert-inexistente', { doctorLicense: 'MP-NEW' }),
