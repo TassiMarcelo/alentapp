@@ -58,4 +58,14 @@ describe('DeleteMedicalCertificateUseCase', () => {
     expect(mockRepo.findById).toHaveBeenCalledWith('cert-1');
     expect(mockRepo.delete).toHaveBeenCalledWith('cert-1');
   });
+
+  it('propaga el error del repositorio cuando falla el borrado en la base de datos (TDD-0020 §Casos de Borde)', async () => {
+    // El controller mapea cualquier error no controlado a 500 "Error interno, reintente más tarde".
+    const dbError = new Error('connection terminated unexpectedly');
+    vi.mocked(mockRepo.delete).mockRejectedValueOnce(dbError);
+
+    await expect(useCase.execute('cert-1')).rejects.toThrow(dbError);
+    expect(mockRepo.findById).toHaveBeenCalledWith('cert-1');
+    expect(mockRepo.delete).toHaveBeenCalledWith('cert-1');
+  });
 });
