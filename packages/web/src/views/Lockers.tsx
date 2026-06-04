@@ -12,6 +12,7 @@ import {
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
 } from '../components/ui/dialog';
 import { Field } from '../components/ui/field';
+import { notify } from '../components/ui/toaster';
 import {
   SelectRoot, SelectTrigger, SelectValueText,
   SelectContent, SelectItem, createListCollection,
@@ -105,7 +106,7 @@ export function LockersView() {
       setCreateForm({ numero: '', ubicacion: 'VESTUARIO_MASCULINO' });
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al crear el locker');
+      notify.error(err.message || 'Error al crear el locker');
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +125,7 @@ export function LockersView() {
       setModal('none');
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al asignar el locker');
+      notify.error(err.message || 'Error al asignar el locker');
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +143,7 @@ export function LockersView() {
       setModal('none');
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar el locker');
+      notify.error(err.message || 'Error al actualizar el locker');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +155,7 @@ export function LockersView() {
       await lockersService.updateEstado(locker.id, { estado: 'DISPONIBLE' });
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al liberar el locker');
+      notify.error(err.message || 'Error al liberar el locker');
     }
   };
 
@@ -164,7 +165,7 @@ export function LockersView() {
       await lockersService.updateEstado(locker.id, { estado: 'MANTENIMIENTO' });
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al enviar a mantenimiento');
+      notify.error(err.message || 'Error al enviar a mantenimiento');
     }
   };
 
@@ -174,7 +175,7 @@ export function LockersView() {
       await lockersService.delete(locker.id);
       void fetchLockers();
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar el locker');
+      notify.error(err.message || 'Error al eliminar el locker');
     }
 };
 

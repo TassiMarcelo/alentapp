@@ -14,6 +14,17 @@ export const toaster = createToaster({
   pauseOnPageIdle: true,
 })
 
+export const notify = {
+  success: (description: string, title: string = "Éxito") =>
+    toaster.create({ title, description, type: "success", duration: 4000 }),
+  error: (description: string, title: string = "Error") =>
+    toaster.create({ title, description, type: "error", duration: 6000 }),
+  warning: (description: string, title: string = "Atención") =>
+    toaster.create({ title, description, type: "warning", duration: 6000 }),
+  info: (description: string, title?: string) =>
+    toaster.create({ title, description, type: "info", duration: 4000 }),
+}
+
 export const Toaster = () => {
   return (
     <Portal>

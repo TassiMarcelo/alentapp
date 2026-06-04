@@ -32,6 +32,7 @@ import {
   DialogCloseTrigger,
 } from '../components/ui/dialog';
 import { Field } from '../components/ui/field';
+import { notify } from '../components/ui/toaster';
 import {
   SelectRoot,
   SelectTrigger,
@@ -112,7 +113,7 @@ export function MedicalCertificatesView() {
       setCreateForm({ member_id: '', issue_date: '', expiry_date: '', doctor_license: '' });
       void fetchCertificates();
     } catch (err: any) {
-      alert(err.message || 'Error al registrar el certificado médico');
+      notify.error(err.message || 'Error al registrar el certificado médico');
     } finally {
       setIsSubmitting(false);
     }
@@ -165,7 +166,7 @@ export function MedicalCertificatesView() {
       setEditOriginal(null);
       void fetchCertificates();
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar el certificado médico');
+      notify.error(err.message || 'Error al actualizar el certificado médico');
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +187,7 @@ export function MedicalCertificatesView() {
       setDeletingCert(null);
       void fetchCertificates();
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar el certificado médico');
+      notify.error(err.message || 'Error al eliminar el certificado médico');
     } finally {
       setIsSubmitting(false);
     }

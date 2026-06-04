@@ -12,6 +12,7 @@ import {
   DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger,
 } from '../components/ui/dialog';
 import { Field } from '../components/ui/field';
+import { notify } from '../components/ui/toaster';
 import {
   SelectRoot, SelectTrigger, SelectValueText,
   SelectContent, SelectItem, createListCollection,
@@ -116,7 +117,7 @@ export function DisciplinesView() {
       setModal('none');
       setCreateForm({ reason: '', start_date: '', end_date: '', is_total_suspension: false, member_id: '' });
     } catch (err: any) {
-      alert(err.message || 'Error al registrar la sanción');
+      notify.error(err.message || 'Error al registrar la sanción');
     } finally {
       setIsSubmitting(false);
     }
@@ -164,7 +165,7 @@ export function DisciplinesView() {
       setEditingId(null);
       setEditOriginal(null);
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar la sanción');
+      notify.error(err.message || 'Error al actualizar la sanción');
     } finally {
       setIsSubmitting(false);
     }
@@ -184,7 +185,7 @@ export function DisciplinesView() {
       setModal('none');
       setDeletingDiscipline(null);
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar la sanción');
+      notify.error(err.message || 'Error al eliminar la sanción');
     } finally {
       setIsSubmitting(false);
     }
