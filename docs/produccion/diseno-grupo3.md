@@ -46,6 +46,47 @@
 - `.dockerignore` debe excluir: `node_modules`, `.git`, `dist`, `coverage`, `e2e`, `*.test.ts`, `.env`
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### c) docker-compose.prod.yml
 
 **Propósito:** definir un entorno productivo con los servicios `api`, `web` y `db`, aplicando buenas prácticas de seguridad, configuración externa, límites de recursos, healthchecks y logging con rotación.
