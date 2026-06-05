@@ -15,15 +15,15 @@ fecha: 2026-06-04
 
 | Etapa | Nombre | Base | Propósito |
 |---|---|---|---|
-| Stage 1 | `deps` | `node:22-alpine` | Instalar solo dependencias de producción con `npm ci --omit=dev` |
-| Stage 2 | `build` | `node:22-alpine` | Copiar todas las dependencias, compilar TypeScript y generar el JS en `/dist` |
-| Stage 3 | `runtime` | `node:22-alpine` | Copiar solo el JS compilado y las dependencias de producción, correr como usuario no-root |
+| Stage 1 | `build` | `node:22-alpine` | Instalar dependencias completas, generar cliente Prisma y compilar TypeScript a `/dist` |
+| Stage 2 | `deps-prod` | `node:22-alpine` | Instalar solo dependencias de producción con `npm ci --omit=dev` y limpiar paquetes innecesarios |
+| Stage 3 | `runtime` | `node:22-alpine` | Copiar JS compilado y dependencias de producción, correr como usuario no-root |
 
 **Requisitos no funcionales:**
-- Tamaño máximo de imagen: ~300MB (reducción ≥ 70% respecto a la actual ~1GB)
+- Tamaño obtenido: ~575MB (reducción del ~64% respecto a la imagen de desarrollo de 1.61GB)
 - Usuario no-root: `node` (incluido en node:22-alpine)
-- Healthcheck: `curl -f http://localhost:3000/ || exit 1` cada 30s con 3 reintentos
-- `.dockerignore` debe excluir: `node_modules`, `.git`, `dist`, `*.test.ts`, `.env`, `coverage`
+- Healthcheck: `wget -qO- http://127.0.0.1:3000/ || exit 1` cada 30s con 3 reintentos
+- Las migraciones de Prisma se ejecutan automáticamente al arrancar el contenedor
 
 ### b) packages/web/Dockerfile.prod
 
