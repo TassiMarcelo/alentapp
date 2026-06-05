@@ -34,8 +34,8 @@ fecha: 2026-06-04
 | Etapa | Nombre | Base | Propósito |
 |---|---|---|---|
 | Stage 1 | `deps` | `node:22-alpine` | Instalar dependencias del workspace con `npm ci` (necesita devDependencies como `vite`, `typescript` y `@vitejs/plugin-react` para poder compilar) |
-| Stage 2 | `build` | `node:22-alpine` | Copiar el código y ejecutar `npm run build -w packages/web` (`tsc -b && vite build`), generando los estáticos en `packages/web/dist` |
-| Stage 3 | `runtime` | `nginx:stable-alpine` | Copiar **solo** el contenido de `dist` a `/usr/share/nginx/html` y servirlo con nginx. No hay Node ni node_modules en esta etapa |
+| Stage 2 | `build` | `node:22-alpine` | Copiar el código y ejecutar `vite build` (sin `tsc -b`, para que un error de tipos no rompa la imagen de producción; el type-check vive en el CI), generando los estáticos en `packages/web/dist` |
+| Stage 3 | `runtime` | `nginxinc/nginx-unprivileged:stable-alpine` | Copiar **solo** el contenido de `dist` a `/usr/share/nginx/html` y servirlo con nginx como usuario no-root (uid 101). No hay Node ni node_modules en esta etapa |
 
 **Configuración de nginx (`packages/web/nginx.conf`):** como hoy no existe, hay que crearlo. Debe incluir:
 - **SPA fallback:** `try_files $uri $uri/ /index.html;` — imprescindible porque la app usa `react-router` (client-side routing). Sin esto, recargar una ruta como `/socios` devuelve 404.
@@ -44,10 +44,10 @@ fecha: 2026-06-04
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer-when-downgrade` y, si aplica, `Content-Security-Policy`.
 
 **Requisitos no funcionales:**
-- Tamaño máximo de imagen: ~170MB (reducción ≥ 70% respecto a la actual ~570MB), apoyado en la base `nginx:stable-alpine` (~50MB) + estáticos
+- Tamaño máximo de imagen: ~170MB (reducción ≥ 70% respecto a la actual ~570MB), apoyado en la base `nginxinc/nginx-unprivileged:stable-alpine` (~50MB) + estáticos
 - Servir con **nginx**, no con Node.js en producción
-- nginx escucha en el puerto `80` (se mapea afuera en el compose)
-- Healthcheck: `curl -f http://localhost:80/ || exit 1` cada 30s con 3 reintentos
+- nginx escucha en el puerto `8080` (puerto no privilegiado: no requiere `CAP_NET_BIND_SERVICE`, por lo que es compatible con `cap_drop: ALL` y con correr como usuario no-root; se mapea afuera en el compose)
+- Healthcheck: `wget -qO- http://127.0.0.1:8080/ || exit 1` cada 30s con 3 reintentos (se usa `wget` porque la base alpine no trae `curl`, y `127.0.0.1` en lugar de `localhost` para evitar que resuelva a IPv6 `::1`, donde nginx no escucha)
 - `.dockerignore` debe excluir: `node_modules`, `.git`, `dist`, `coverage`, `e2e`, `*.test.ts`, `.env`
 
 ### c) docker-compose.prod.yml
