@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "tsx watch src/app.ts",
         "dev:test": "dotenv -e .env.test -- tsx watch src/app.ts",
+        "build": "tsc",
         "test": "vitest",
         "coverage": "vitest run --coverage"
     },
@@ -15,6 +16,7 @@
         "@prisma/client": "^7.7.0",
         "date-fns": "^4.1.0",
         "fastify": "^5.8.5",
+        "prisma": "^7.7.0",
         "zod": "^4.4.3"
     },
     "devDependencies": {
@@ -24,7 +26,6 @@
         "dotenv": "^16.6.1",
         "dotenv-cli": "^11.0.0",
         "pg": "^8.20.0",
-        "prisma": "^7.7.0",
         "supertest": "^7.2.2",
         "tsx": "^4.21.0",
         "vitest": "^4.1.5"
