@@ -1,3 +1,8 @@
+---
+grupo: Grupo 3
+fecha: 2026-06-04
+---
+
 # Diseño de Infraestructura de Producción
 
 ## 2.1. Diseño de la infraestructura Docker
@@ -46,6 +51,40 @@
 - `.dockerignore` debe excluir: `node_modules`, `.git`, `dist`, `coverage`, `e2e`, `*.test.ts`, `.env`
 
 ### c) docker-compose.prod.yml
+
+**Propósito:** definir un entorno productivo con los servicios `api`, `web` y `db`, aplicando buenas prácticas de seguridad, configuración externa, límites de recursos, healthchecks y logging con rotación.
+
+**Servicios:**
+
+| Servicio | Propósito |
+|---|---|
+| `db` | Base de datos PostgreSQL |
+| `api` | Backend de la aplicación |
+| `web` | Frontend servido con Nginx unprivileged |
+
+**Configuración propuesta:**
+
+| Aspecto | Requisito |
+|---|---|
+| Resource limits | CPU y memoria definidos por servicio |
+| Healthchecks | Para API, Web y DB |
+| Seguridad | `read_only: true`, `cap_drop: ALL`, `cap_add: NET_BIND_SERVICE`, `no-new-privileges:true` |
+| Logging | Driver `json-file` con rotación: `max-size: 10m` y `max-file: 3` |
+| Red | Red interna personalizada `alentapp-network` |
+| Secrets | Variables sensibles desde archivo `.env` con `${VARIABLE}` |
+
+**Límites de recursos por servicio:**
+
+| Servicio | CPU | Memoria |
+|---|---|---|
+| `db` | 0.5 cores | 512MB |
+| `api` | 1.0 cores | 512MB |
+| `web` | 0.5 cores | 256MB |
+
+**Decisiones técnicas:**
+- La API usa `tmpfs` en `/tmp` para directorios de escritura temporal compatibles con `read_only: true`
+- El Web usa `nginxinc/nginx-unprivileged` que corre como usuario no-root en puerto 8080, compatible con `cap_drop: ALL`
+- Los directorios de caché de nginx se montan como `tmpfs` para permitir `read_only: true`
 
 
 
