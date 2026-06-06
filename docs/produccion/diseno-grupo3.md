@@ -1,6 +1,6 @@
 ---
 grupo: Grupo 3
-fecha: 2026-06-04
+fecha de creación: 2026-06-04
 ---
 
 # Diseño de Infraestructura de Producción
@@ -168,3 +168,60 @@ export { sdk, meter, prometheusExporter };
 
 
 ### c) Dashboard RED en Grafana
+
+**Propósito:** Un dashboard en Grafana que materializa el método **RED** (**Rate, Errors, Duration**) para visualizar en tiempo real la salud de la API en producción. Lee las métricas que OpenTelemetry captura y que Prometheus scrapea del endpoint `:9464/metrics`, permitiendo diagnosticar en un vistazo: *¿cuánto tráfico?*, *¿cuántos fallos?*, *¿qué tan rápido?*. Cierra el pilar de **observabilidad**: hoy no hay forma de monitorear el desempeño en producción.
+
+**Metadatos del dashboard:**
+
+| Aspecto | Valor |
+|---|---|
+| Nombre | `RED — Alentapp API` |
+| Datasource | Prometheus (job `opentelemetry`) |
+| Ubicación | `observability/grafana/dashboards/red-metrics.json` |
+| Auto-refresh | 5 segundos |
+| Rango temporal | Últimos 15 minutos |
+
+**Los 6 paneles:**
+
+| # | Panel | Gráfico | Consulta PromQL | Propósito |
+|---|---|---|---|---|
+| 1 | **Requests/s** | Time series | `sum by (route) (rate(http_server_duration_count[1m]))` | **Rate**: volumen de tráfico por ruta |
+| 2 | **Error %** | Time series | `sum(rate(http_server_duration_count{status=~"5.."}[1m])) / sum(rate(http_server_duration_count[1m])) * 100` | **Errors**: % de fallos (4xx/5xx) |
+| 3 | **Latencia p95/p99** | Time series | `histogram_quantile(0.95, sum by (le) (rate(http_server_duration_bucket[5m])))` y `0.99` | **Duration**: performance percibido (ms) |
+| 4 | **Por status code** | Stacked area | `sum by (status) (rate(http_server_duration_count[5m]))` | Distribución de respuestas (2xx/3xx/4xx/5xx) |
+| 5 | **Memoria (MB)** | Time series | `process_memory_usage_bytes / 1024 / 1024` | Consumo de memoria del proceso Node |
+| 6 | **Top 5 lentos** | Bar chart | `topk(5, sum by (route) (rate(http_server_duration_sum[5m])) / sum by (route) (rate(http_server_duration_count[5m])))` | Endpoints más lentos (cuello de botella) |
+
+**Decisiones de cada panel:**
+
+- **Panel 1 (Rate/Requests):** Desglosado `by (route)` para ver qué endpoints concentran el tráfico. Ventana `[1m]` para máxima reactividad, detectando picos o caídas al instante.
+
+- **Panel 2 (Errors):** Calcula el **% de error** como: (5xx por minuto) / (total de requests por minuto) × 100. Más útil que contar fallos absolutos. Incluir **thresholds visuales**: verde <1%, ámbar 1-5%, rojo >5% para alertar a simple vista.
+
+- **Panel 3 (Duration):** Muestra **p95 y p99** del histograma de latencia (dos líneas). `histogram_quantile` requiere buckets agregados `by (le)`. Ventana `[5m]` suaviza el ruido cuando hay bajo volumen. Los percentiles representan mejor la experiencia del usuario que promedios simples.
+
+- **Panel 4 (Status codes):** Área apilada con colores semafóricos: 2xx verde, 3xx azul, 4xx ámbar, 5xx rojo. Permite leer la distribución de respuestas de un golpe. Ventana `[5m]` para tendencia.
+
+- **Panel 5 (Memoria):** Complementa RED con consumo de memoria (en MB). Detecta memory leaks o presión de heap antes de que causen crashes. Tendencia en el tiempo es clave.
+
+- **Panel 6 (Top 5 endpoints lentos):** Latencia **promedio** por ruta = `rate(sum) / rate(count)` (fórmula correcta para histogramas). Ordenado con `topk(5, ...)` expone los cuellos de botella más relevantes.
+
+**Layout (grilla de 24 columnas de Grafana):**
+
+| Fila | Paneles | Distribución |
+|---|---|---|
+| 1 | `1 Requests/s` · `2 Error %` · `3 Latencia p95/p99` | 8 + 8 + 8 columnas |
+| 2 | `4 Status code` · `5 Memoria` | 12 + 12 columnas |
+| 3 | `6 Top 5 endpoints lentos` | 24 columnas (ancho completo) |
+
+**Consideraciones técnicas:**
+
+- **Ventanas de tiempo:** `[1m]` para tráfico y errores (máxima reactividad); `[5m]` para percentiles y latencia (estable ante bajo volumen).
+- **Queries PromQL:** Todas usan `rate(...)` nunca el counter crudo. Un Counter solo crece; `rate()` devuelve la pendiente por segundo (lo que tiene sentido graficar).
+- **Colores y thresholds:** Panel 2 con thresholds semafóricos (verde/ámbar/rojo). Panel 4 con mapeo de color por familia HTTP.
+- **Dependencias:** El dashboard requiere que:
+  - §2.2.a capture métricas RED con labels `method`, `route`, `status`
+  - §2.2.b exponga PrometheusExporter en `:9464/metrics`
+  - §3.4 configure Prometheus para scrapear ese endpoint
+  - Si no llegan datos → paneles vacíos = validación de que OTel → Prometheus → Grafana funciona.
+- **Naming de métricas:** Las consultas asumen nombres que genera PrometheusExporter (`http_server_duration_*`). Si en §2.2.a se definen métricas custom con otro prefijo, las queries se ajustan a ese nombre.
