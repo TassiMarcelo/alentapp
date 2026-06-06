@@ -96,6 +96,75 @@ fecha: 2026-06-04
 
 ### b) Configuración del SDK de OpenTelemetry
 
+```ts
+// packages/api/src/infrastructure/telemetry.ts
+
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { metrics } from '@opentelemetry/api';
+import type { Meter } from '@opentelemetry/api';
+
+// 1. PrometheusExporter en puerto 9464
+const prometheusExporter = new PrometheusExporter({
+  port: 9464,
+  endpoint: '/metrics',
+});
+
+// 2. SDK con auto-instrumentaciones para HTTP y Fastify
+const sdk = new NodeSDK({
+  metricReader: prometheusExporter,
+  instrumentations: [
+    getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-http': {
+        // No instrumentar el propio endpoint /metrics
+        ignoreIncomingRequestHook: (req) =>
+          req.url?.startsWith('/metrics') ?? false,
+      },
+      '@opentelemetry/instrumentation-fastify': {},
+    }),
+  ],
+});
+
+sdk.start();
+
+// 3. Métricas personalizadas RED
+const meter = metrics.getMeter('alentapp-api');
+
+export function createREDMetrics(m: Meter = meter) {
+  const requestCounter = m.createCounter('http.requests.total', {
+    description: 'Total de requests HTTP recibidos',
+  });
+
+  const errorCounter = m.createCounter('http.requests.errors', {
+    description: 'Total de requests HTTP con error (4xx/5xx)',
+  });
+
+  const requestDuration = m.createHistogram('http.request.duration', {
+    description: 'Duración de cada request HTTP',
+    unit: 'ms',
+  });
+
+  // Gauge: memoria del proceso
+  const memoryGauge = m.createObservableGauge('process.memory.usage', {
+    description: 'Uso de memoria heap del proceso Node.js',
+    unit: 'By',
+  });
+  m.addBatchObservableCallback(
+    (obs) => obs.observe(memoryGauge, process.memoryUsage().heapUsed),
+    [memoryGauge]
+  );
+
+  // Gauge: requests concurrentes (se incrementa/decrementa desde los hooks)
+  const activeRequests = m.createUpDownCounter('http.requests.active', {
+    description: 'Requests HTTP actualmente en procesamiento',
+  });
+
+  return { requestCounter, errorCounter, requestDuration, activeRequests };
+}
+
+export { sdk, meter, prometheusExporter };
+```
 
 
 ### c) Dashboard RED en Grafana
