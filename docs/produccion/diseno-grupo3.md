@@ -64,6 +64,7 @@ fecha: 2026-06-04
 
 **Configuración propuesta:**
 
+
 | Aspecto | Requisito |
 |---|---|
 | Resource limits | CPU y memoria definidos por servicio |
