@@ -34,8 +34,8 @@ fecha de creación: 2026-06-04
 | Etapa | Nombre | Base | Propósito |
 |---|---|---|---|
 | Stage 1 | `deps` | `node:22-alpine` | Instalar dependencias del workspace con `npm ci` (necesita devDependencies como `vite`, `typescript` y `@vitejs/plugin-react` para poder compilar) |
-| Stage 2 | `build` | `node:22-alpine` | Copiar el código y ejecutar `npm run build -w packages/web` (`tsc -b && vite build`), generando los estáticos en `packages/web/dist` |
-| Stage 3 | `runtime` | `nginx:stable-alpine` | Copiar **solo** el contenido de `dist` a `/usr/share/nginx/html` y servirlo con nginx. No hay Node ni node_modules en esta etapa |
+| Stage 2 | `build` | `node:22-alpine` | Copiar el código y ejecutar `vite build` (sin `tsc -b`, para que un error de tipos no rompa la imagen de producción; el type-check vive en el CI), generando los estáticos en `packages/web/dist` |
+| Stage 3 | `runtime` | `nginxinc/nginx-unprivileged:stable-alpine` | Copiar **solo** el contenido de `dist` a `/usr/share/nginx/html` y servirlo con nginx como usuario no-root (uid 101). No hay Node ni node_modules en esta etapa |
 
 **Configuración de nginx (`packages/web/nginx.conf`):** como hoy no existe, hay que crearlo. Debe incluir:
 - **SPA fallback:** `try_files $uri $uri/ /index.html;` — imprescindible porque la app usa `react-router` (client-side routing). Sin esto, recargar una ruta como `/socios` devuelve 404.
@@ -44,10 +44,10 @@ fecha de creación: 2026-06-04
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer-when-downgrade` y, si aplica, `Content-Security-Policy`.
 
 **Requisitos no funcionales:**
-- Tamaño máximo de imagen: ~170MB (reducción ≥ 70% respecto a la actual ~570MB), apoyado en la base `nginx:stable-alpine` (~50MB) + estáticos
+- Tamaño máximo de imagen: ~170MB (reducción ≥ 70% respecto a la actual ~570MB), apoyado en la base `nginxinc/nginx-unprivileged:stable-alpine` (~50MB) + estáticos
 - Servir con **nginx**, no con Node.js en producción
-- nginx escucha en el puerto `80` (se mapea afuera en el compose)
-- Healthcheck: `curl -f http://localhost:80/ || exit 1` cada 30s con 3 reintentos
+- nginx escucha en el puerto `8080` (puerto no privilegiado: no requiere `CAP_NET_BIND_SERVICE`, por lo que es compatible con `cap_drop: ALL` y con correr como usuario no-root; se mapea afuera en el compose)
+- Healthcheck: `wget -qO- http://127.0.0.1:8080/ || exit 1` cada 30s con 3 reintentos (se usa `wget` porque la base alpine no trae `curl`, y `127.0.0.1` en lugar de `localhost` para evitar que resuelva a IPv6 `::1`, donde nginx no escucha)
 - `.dockerignore` debe excluir: `node_modules`, `.git`, `dist`, `coverage`, `e2e`, `*.test.ts`, `.env`
 
 ### c) docker-compose.prod.yml
@@ -63,6 +63,7 @@ fecha de creación: 2026-06-04
 | `web` | Frontend servido con Nginx unprivileged |
 
 **Configuración propuesta:**
+
 
 | Aspecto | Requisito |
 |---|---|
@@ -92,10 +93,101 @@ fecha de creación: 2026-06-04
 
 ### a) Métricas RED a capturar
 
+Las métricas RED permiten monitorear el comportamiento general de la API a través de tres aspectos fundamentales: volumen de tráfico, cantidad de errores y tiempo de respuesta.
+
+| Métrica | Tipo OpenTelemetry | Descripción | Labels |
+|----------|----------|----------|----------|
+| Rate | Counter (`http.requests.total`) | Cantidad total de requests HTTP recibidos. Permite calcular requests por segundo (RPS). | method, route, status |
+| Errors | Counter (`http.requests.errors`) | Cantidad de requests que finalizan con error (códigos 4xx y 5xx). | method, route, status |
+| Duration | Histogram (`http.request.duration`) | Tiempo de procesamiento de cada request HTTP en milisegundos. | method, route |
+
+### Métrica adicional implementada
+
+| Métrica | Tipo OpenTelemetry | Descripción |
+|----------|----------|----------|
+| process.memory.usage | Observable Gauge | Memoria heap utilizada por el proceso Node.js. |
+
+### Justificación
+
+- **Rate** permite medir el nivel de tráfico recibido por la API.
+- **Errors** permite detectar problemas funcionales y degradaciones del servicio.
+- **Duration** permite analizar la latencia y experiencia percibida por los usuarios.
+- **process.memory.usage** permite monitorear el consumo de memoria y detectar posibles fugas.
+
+La combinación de estas métricas proporciona una visión completa del estado operativo de la aplicación y constituye la base para los dashboards de observabilidad en Grafana.
 
 
 ### b) Configuración del SDK de OpenTelemetry
 
+```ts
+// packages/api/src/infrastructure/telemetry.ts
+
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { metrics } from '@opentelemetry/api';
+import type { Meter } from '@opentelemetry/api';
+
+// 1. PrometheusExporter en puerto 9464
+const prometheusExporter = new PrometheusExporter({
+  port: 9464,
+  endpoint: '/metrics',
+});
+
+// 2. SDK con auto-instrumentaciones para HTTP y Fastify
+const sdk = new NodeSDK({
+  metricReader: prometheusExporter,
+  instrumentations: [
+    getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-http': {
+        // No instrumentar el propio endpoint /metrics
+        ignoreIncomingRequestHook: (req) =>
+          req.url?.startsWith('/metrics') ?? false,
+      },
+      '@opentelemetry/instrumentation-fastify': {},
+    }),
+  ],
+});
+
+sdk.start();
+
+// 3. Métricas personalizadas RED
+const meter = metrics.getMeter('alentapp-api');
+
+export function createREDMetrics(m: Meter = meter) {
+  const requestCounter = m.createCounter('http.requests.total', {
+    description: 'Total de requests HTTP recibidos',
+  });
+
+  const errorCounter = m.createCounter('http.requests.errors', {
+    description: 'Total de requests HTTP con error (4xx/5xx)',
+  });
+
+  const requestDuration = m.createHistogram('http.request.duration', {
+    description: 'Duración de cada request HTTP',
+    unit: 'ms',
+  });
+
+  // Gauge: memoria del proceso
+  const memoryGauge = m.createObservableGauge('process.memory.usage', {
+    description: 'Uso de memoria heap del proceso Node.js',
+    unit: 'By',
+  });
+  m.addBatchObservableCallback(
+    (obs) => obs.observe(memoryGauge, process.memoryUsage().heapUsed),
+    [memoryGauge]
+  );
+
+  // Gauge: requests concurrentes (se incrementa/decrementa desde los hooks)
+  const activeRequests = m.createUpDownCounter('http.requests.active', {
+    description: 'Requests HTTP actualmente en procesamiento',
+  });
+
+  return { requestCounter, errorCounter, requestDuration, activeRequests };
+}
+
+export { sdk, meter, prometheusExporter };
+```
 
 
 ### c) Dashboard RED en Grafana

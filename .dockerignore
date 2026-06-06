@@ -2,3 +2,15 @@ node_modules
 dist
 .git
 *.log
+
+# Artefactos de test y cobertura (no van a la imagen de producción)
+**/coverage
+**/e2e
+**/*.test.ts
+**/__tests__
+playwright-report
+test-results
+
+# Variables de entorno / secretos (no hornear en la imagen)
+**/.env
+**/.env.*

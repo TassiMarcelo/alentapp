@@ -6,15 +6,24 @@
     "scripts": {
         "dev": "tsx watch src/app.ts",
         "dev:test": "dotenv -e .env.test -- tsx watch src/app.ts",
+        "build": "tsc",
         "test": "vitest",
         "coverage": "vitest run --coverage"
     },
     "dependencies": {
         "@fastify/cors": "^11.2.0",
+        "@opentelemetry/api": "^1.9.1",
+        "@opentelemetry/auto-instrumentations-node": "^0.76.0",
+        "@opentelemetry/exporter-prometheus": "^0.218.0",
+        "@opentelemetry/instrumentation-fastify": "^0.56.0",
+        "@opentelemetry/instrumentation-http": "^0.218.0",
+        "@opentelemetry/sdk-metrics": "^2.7.1",
+        "@opentelemetry/sdk-node": "^0.218.0",
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.7.0",
         "date-fns": "^4.1.0",
         "fastify": "^5.8.5",
+        "prisma": "^7.7.0",
         "zod": "^4.4.3"
     },
     "devDependencies": {
@@ -24,7 +33,6 @@
         "dotenv": "^16.6.1",
         "dotenv-cli": "^11.0.0",
         "pg": "^8.20.0",
-        "prisma": "^7.7.0",
         "supertest": "^7.2.2",
         "tsx": "^4.21.0",
         "vitest": "^4.1.5"

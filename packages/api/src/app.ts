@@ -1,3 +1,5 @@
+import './infrastructure/telemetry.js';
+import { createREDMetrics } from './infrastructure/telemetry.js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
@@ -61,6 +63,27 @@ export function buildApp() {
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
+    });
+
+    const { requestCounter, errorCounter, requestDuration } = createREDMetrics();
+
+    server.addHook('onRequest', async (request) => {
+        request.startTime = Date.now();
+    });
+
+    server.addHook('onResponse', async (request, reply) => {
+        const method   = request.method;
+        const route    = request.routeOptions.url ?? request.url.split('?')[0];
+        const status   = String(reply.statusCode);
+        const duration = Date.now() - (request.startTime ?? Date.now());
+
+        requestCounter.add(1, { method, route, status });
+
+        if (reply.statusCode >= 400) {
+            errorCounter.add(1, { method, route, status });
+        }
+
+        requestDuration.record(duration, { method, route });
     });
 
     const memberRepo = new PostgresMemberRepository();
