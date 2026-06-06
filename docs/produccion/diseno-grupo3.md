@@ -92,6 +92,28 @@ fecha: 2026-06-04
 
 ### a) Métricas RED a capturar
 
+Las métricas RED permiten monitorear el comportamiento general de la API a través de tres aspectos fundamentales: volumen de tráfico, cantidad de errores y tiempo de respuesta.
+
+| Métrica | Tipo OpenTelemetry | Descripción | Labels |
+|----------|----------|----------|----------|
+| Rate | Counter (`http.requests.total`) | Cantidad total de requests HTTP recibidos. Permite calcular requests por segundo (RPS). | method, route, status |
+| Errors | Counter (`http.requests.errors`) | Cantidad de requests que finalizan con error (códigos 4xx y 5xx). | method, route, status |
+| Duration | Histogram (`http.request.duration`) | Tiempo de procesamiento de cada request HTTP en milisegundos. | method, route |
+
+### Métrica adicional implementada
+
+| Métrica | Tipo OpenTelemetry | Descripción |
+|----------|----------|----------|
+| process.memory.usage | Observable Gauge | Memoria heap utilizada por el proceso Node.js. |
+
+### Justificación
+
+- **Rate** permite medir el nivel de tráfico recibido por la API.
+- **Errors** permite detectar problemas funcionales y degradaciones del servicio.
+- **Duration** permite analizar la latencia y experiencia percibida por los usuarios.
+- **process.memory.usage** permite monitorear el consumo de memoria y detectar posibles fugas.
+
+La combinación de estas métricas proporciona una visión completa del estado operativo de la aplicación y constituye la base para los dashboards de observabilidad en Grafana.
 
 
 ### b) Configuración del SDK de OpenTelemetry
