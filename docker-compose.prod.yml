@@ -37,8 +37,12 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - NODE_ENV=production
       - PORT=3000
+      - OTEL_METRICS_PORT=9464
+      - OTEL_SERVICE_NAME=alentapp-api
+      - OTEL_SERVICE_VERSION=1.0.0
     ports:
       - '3000:3000'
+      - '9464:9464'
     networks:
       - alentapp-network
     depends_on:
