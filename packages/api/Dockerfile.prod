@@ -59,6 +59,13 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000
 
+# El runtime arranca con `node` y el binario de Prisma directo (ver CMD), nunca con
+# npm/npx. Los borramos del base image para no dejar herramientas de build en producción.
+RUN rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx
+
 COPY --chown=node:node --from=deps-prod /app/node_modules ./node_modules
 # Las engines binarias de Prisma se descargan vía postinstall (que skipeamos con --ignore-scripts).
 # Las traemos del stage `build`, donde `prisma generate` ya las descargó.
