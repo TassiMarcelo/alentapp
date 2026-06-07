@@ -2,13 +2,9 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'alentapp-api'
-    static_configs:
-      - targets: ['api:3000']
-        labels:
-          app: 'alentapp'
-          service: 'api'
-
+  # Único endpoint de métricas: el PrometheusExporter de OpenTelemetry expone las
+  # métricas RED en su propio servidor HTTP en :9464. La app Fastify en :3000 NO
+  # sirve /metrics, por eso no se define un job hacia ese puerto.
   - job_name: 'opentelemetry'
     static_configs:
       - targets: ['api:9464']
