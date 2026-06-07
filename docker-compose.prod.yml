@@ -109,9 +109,80 @@ services:
         max-size: 10m
         max-file: '3'
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: alentapp-prometheus-prod
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data-prod:/prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - alentapp-network
+    depends_on:
+      - api
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:9090/-/healthy']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: alentapp-grafana-prod
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data-prod:/var/lib/grafana
+    ports:
+      - '3001:3000'
+    networks:
+      - alentapp-network
+    depends_on:
+      - prometheus
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
 networks:
   alentapp-network:
     driver: bridge
 
 volumes:
   pgdata-prod:
+  prometheus-data-prod:
+  grafana-data-prod:
