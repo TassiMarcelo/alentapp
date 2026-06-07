@@ -208,12 +208,12 @@ export { sdk, meter, prometheusExporter };
 
 | # | Panel | Gráfico | Consulta PromQL | Propósito |
 |---|---|---|---|---|
-| 1 | **Requests/s** | Time series | `sum by (route) (rate(http_server_duration_count[1m]))` | **Rate**: volumen de tráfico por ruta |
-| 2 | **Error %** | Time series | `sum(rate(http_server_duration_count{status=~"5.."}[1m])) / sum(rate(http_server_duration_count[1m])) * 100` | **Errors**: % de fallos (4xx/5xx) |
-| 3 | **Latencia p95/p99** | Time series | `histogram_quantile(0.95, sum by (le) (rate(http_server_duration_bucket[5m])))` y `0.99` | **Duration**: performance percibido (ms) |
-| 4 | **Por status code** | Stacked area | `sum by (status) (rate(http_server_duration_count[5m]))` | Distribución de respuestas (2xx/3xx/4xx/5xx) |
-| 5 | **Memoria (MB)** | Time series | `process_memory_usage_bytes / 1024 / 1024` | Consumo de memoria del proceso Node |
-| 6 | **Top 5 lentos** | Bar chart | `topk(5, sum by (route) (rate(http_server_duration_sum[5m])) / sum by (route) (rate(http_server_duration_count[5m])))` | Endpoints más lentos (cuello de botella) |
+| 1 | **Requests/s** | Time series | `sum by (route) (rate(http_requests_total[1m]))` | **Rate**: volumen de tráfico por ruta |
+| 2 | **Error %** | Time series | `sum(rate(http_requests_total{status=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) * 100` | **Errors**: % de fallos (5xx) |
+| 3 | **Latencia p95/p99** | Time series | `histogram_quantile(0.95, sum by (le) (rate(http_request_duration_bucket[5m])))` y `0.99` | **Duration**: performance percibido (ms) |
+| 4 | **Por status code** | Stacked area | `sum by (status) (rate(http_requests_total[5m]))` | Distribución de respuestas (2xx/3xx/4xx/5xx) |
+| 5 | **Memoria (MB)** | Time series | `process_memory_usage / 1024 / 1024` | Consumo de memoria del proceso Node |
+| 6 | **Top 5 lentos** | Bar chart | `topk(5, sum by (route) (rate(http_request_duration_sum[5m])) / sum by (route) (rate(http_request_duration_count[5m])))` | Endpoints más lentos (cuello de botella) |
 
 **Decisiones de cada panel:**
 
@@ -247,4 +247,4 @@ export { sdk, meter, prometheusExporter };
   - §2.2.b exponga PrometheusExporter en `:9464/metrics`
   - §3.4 configure Prometheus para scrapear ese endpoint
   - Si no llegan datos → paneles vacíos = validación de que OTel → Prometheus → Grafana funciona.
-- **Naming de métricas:** Las consultas asumen nombres que genera PrometheusExporter (`http_server_duration_*`). Si en §2.2.a se definen métricas custom con otro prefijo, las queries se ajustan a ese nombre.
+- **Naming de métricas:** Las consultas usan los nombres que el `PrometheusExporter` deriva de las métricas custom definidas en §2.2.a (no las de auto-instrumentación). El serializer convierte `.` → `_`, agrega `_total` solo a counters monótonos que no lo tengan y **no** agrega sufijo de unidad. Por eso los nombres efectivos son: `http_requests_total` (labels `method`, `route`, `status`), `http_requests_errors_total`, el histograma `http_request_duration_{bucket,sum,count}` (labels `method`, `route`) y el gauge `process_memory_usage` (en bytes; se divide por `1024/1024` para mostrar MB). El **Panel 2** calcula el % de error sobre `http_requests_total{status=~"5.."}` (5xx) en lugar de un sufijo de auto-instrumentación.
