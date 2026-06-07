@@ -24,7 +24,7 @@
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": { "selected": false, "text": "Prometheus", "value": "prometheus" },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
