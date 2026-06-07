@@ -38,9 +38,9 @@ RUN npm ci --omit=dev --ignore-scripts \
     --workspace=@alentapp/shared \
     --include-workspace-root=false \
  && npm cache clean --force \
- # Prisma 7 CLI requiere @prisma/dev + @electric-sql incluso para `migrate deploy`
- # Hoisteados de "web" o tooling — NO los importan ni la API ni el CLI de Prisma
- # (NO borrar: valibot, remeda, fast-check, effect, @electric-sql, @prisma/dev — los exige @prisma CLI)
+ # Hoisteados de "web" o tooling — NO los importan ni la API ni el CLI de Prisma.
+ # (NO borrar: valibot, remeda, fast-check, effect, @prisma/dev — los exige @prisma CLI
+ #  al cargar `migrate deploy`; verificado: quitarlos rompe el arranque con MODULE_NOT_FOUND)
  && rm -rf \
       node_modules/react \
       node_modules/react-dom \
@@ -50,6 +50,18 @@ RUN npm ci --omit=dev --ignore-scripts \
       node_modules/typescript \
       node_modules/csstype \
       node_modules/@types \
+ # @prisma/client (~72M): el server usa el cliente generado autocontenido
+ # (packages/api/dist/generated, con su propio runtime + WASM solo-postgres). Ni el server
+ # ni `migrate deploy` importan @prisma/client → fuera de la imagen.
+      node_modules/@prisma/client \
+ # @electric-sql/pglite (~19M): Postgres WASM en proceso, solo lo usa @prisma/dev/studio para
+ # bases locales de desarrollo. `migrate deploy` contra una DB real no lo carga.
+      node_modules/@electric-sql/pglite \
+ # Prisma Studio: el CLI requiere @prisma/studio-core/data/* al cargar, pero NO su UI web
+ # (~24M) ni los metafiles de esbuild (~5M). Podamos solo eso y dejamos data/ intacto.
+      node_modules/@prisma/studio-core/dist/ui \
+      node_modules/@prisma/studio-core/dist/metafile-cjs.json \
+      node_modules/@prisma/studio-core/dist/metafile-esm.json \
  # Limpieza de archivos no necesarios en runtime
  && find node_modules -type d \( -name test -o -name tests -o -name __tests__ -o -name docs -o -name examples \) -prune -exec rm -rf {} + 2>/dev/null || true \
  && find node_modules -type f \( -name "*.md" -o -name "*.markdown" -o -name "*.map" -o -name "*.ts" -o -name "LICENSE*" -o -name "CHANGELOG*" -o -name ".npmignore" -o -name ".eslintrc*" -o -name "tsconfig*.json" \) -delete 2>/dev/null || true
