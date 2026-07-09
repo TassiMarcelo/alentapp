@@ -1,74 +1,92 @@
-import { PaymentRepository } from '../domain/PaymentRepository.js';
-import { MemberRepository } from '../domain/MemberRepository.js';
-import { PaymentDTO, UpdatePaymentRequest } from '@alentapp/shared';
+import { PaymentRepository } from '../domain/PaymentRepository.js'; 
+import { MemberRepository } from '../domain/MemberRepository.js'; 
+import { PaymentDTO, UpdatePaymentRequest } from '@alentapp/shared'; 
+import { PaymentValidator } from '../domain/services/PaymentValidator.js'; 
 
-export class UpdatePaymentUseCase {
-    constructor(
-        private readonly paymentRepo: PaymentRepository,
-        private readonly memberRepo: MemberRepository
-    ) {}
+  
+export class UpdatePaymentUseCase { 
 
-    async execute(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO> {
+    constructor( 
 
-        try {
+        private readonly paymentRepo: PaymentRepository, 
 
-            // 1. Validar existencia del pago
-            const existingPayment = await this.paymentRepo.findById(id);
+        private readonly memberRepo: MemberRepository 
 
-            if (!existingPayment) {
-                throw new Error('404: El pago no existe');
-            }
+    ) {} 
 
-            // 2. Validar existencia del socio asociado
-            if (!existingPayment.memberId) {
-                throw new Error('404: El socio no existe');
-            }
+  
+    async execute(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO> { 
 
-            const member = await this.memberRepo.findById(existingPayment.memberId);
+        try { 
 
-            if (!member) {
-                throw new Error('404: El socio no existe');
-            }
+            // 1. Validar existencia del pago 
 
-            // 3. Validar estado del pago
-            if (existingPayment.estado !== 'Pendiente') {
-                throw new Error('400: Solo se pueden modificar pagos en estado Pendiente');
-            }
+            PaymentValidator.validatePaymentId(id); 
 
-            // 4. Validar monto si se envía
-            if (data.monto !== undefined && data.monto <= 0) {
-                throw new Error('400: El monto debe ser mayor a 0');
-            }
+            const existingPayment = await this.paymentRepo.findById(id); 
 
-            // 5. Validar fecha de vencimiento si se envía
-            if (data.fechaVencimiento) {
-                const fecha = new Date(data.fechaVencimiento);
+             PaymentValidator.validatePaymentExists(existingPayment); 
 
-                if (isNaN(fecha.getTime())) {
-                    throw new Error('400: Fecha de vencimiento inválida');
-                }
-            }
+  
 
-            // 6. Armar objeto actualizado
-            const updatedData = {
-                ...data
-            };
+            // 2. Validar existencia del socio  
 
-            // 7. Persistir cambios
-            return await this.paymentRepo.update(id, updatedData);
+            PaymentValidator.validateMemberId(existingPayment.memberId); 
 
-        } catch (error: any) {
+            const member = await this.memberRepo.findById(existingPayment.memberId); 
 
-            // Errores controlados
-            if (
-                error.message.startsWith('400') ||
-                error.message.startsWith('404')
-            ) {
-                throw error;
-            }
+            PaymentValidator.validateMemberExists(member); 
 
-            // Error inesperado / DB
-            throw new Error('500: Error de base de datos');
-        }
-    }
+  
+
+            // 3. Validar estado del pago 
+
+            PaymentValidator.validatePendingStatus( 
+
+                existingPayment.estado 
+
+            ); 
+
+  
+            // 4. Validar monto si se envía 
+
+            if (data.monto !== undefined) { 
+
+                PaymentValidator.validateMonto(data.monto); 
+
+            } 
+
+              
+            // 5. Armar objeto actualizado 
+
+            const updatedData = { 
+
+                ...data 
+
+            }; 
+
+
+            // 6. Persistir cambios 
+
+            return await this.paymentRepo.update(id, updatedData); 
+  
+        } catch (error: any) { 
+
+
+            if ( 
+
+                error.message.startsWith('400') || 
+
+                error.message.startsWith('404') 
+
+            ) { 
+
+                throw error; 
+
+            } 
+  
+            throw new Error('500: Error de base de datos'); 
+
+        } 
+    }  
 }
