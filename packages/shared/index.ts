@@ -193,7 +193,6 @@ export interface CreatePaymentRequest {
 
 export interface UpdatePaymentRequest {
   monto?: number;
-  fechaVencimiento?: string; // ISO Date String
 }
 
 export interface PayPaymentRequest {

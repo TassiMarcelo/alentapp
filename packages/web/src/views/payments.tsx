@@ -335,6 +335,7 @@ export function PaymentsView() {
                   <Table.ColumnHeader>Monto</Table.ColumnHeader>
                   <Table.ColumnHeader>Mes</Table.ColumnHeader>
                   <Table.ColumnHeader>Año</Table.ColumnHeader>
+                  <Table.ColumnHeader>Vencimiento</Table.ColumnHeader>
                   <Table.ColumnHeader>Estado</Table.ColumnHeader>
                   <Table.ColumnHeader textAlign="end">Acciones</Table.ColumnHeader>
                 </Table.Row>
@@ -348,6 +349,7 @@ export function PaymentsView() {
                     <Table.Cell>${p.monto}</Table.Cell>
                     <Table.Cell>{p.mesReferencia}</Table.Cell>
                     <Table.Cell>{p.anioReferencia}</Table.Cell>
+                    <Table.Cell>{new Date(p.fechaVencimiento).toLocaleDateString('es-AR', {day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC'})}</Table.Cell>
 
                     <Table.Cell>
                       <Box
